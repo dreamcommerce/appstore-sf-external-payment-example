@@ -1,0 +1,12 @@
+security:
+    providers:
+        appstore_user_provider:
+            id: App\Security\AppStoreUserProvider
+    firewalls:
+        main:
+            lazy: true
+            provider: appstore_user_provider
+            custom_authenticators:
+                - App\Security\IframeAuthentication
+
+    access_control:

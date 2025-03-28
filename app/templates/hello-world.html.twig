@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        <script src="https://dcsaascdn.net/js/dc-sdk-1.0.5.min.js"></script>
+        <script>
+            (function () {
+                'use strict';
+
+                window.shopAppInstance = new ShopApp(function (app) {
+                    app.init(null, function (params, app) {
+                        app.show(null, function () {
+                            app.adjustIframeSize();
+                        });
+                    }, function (errmsg, app) {
+                        alert(errmsg);
+                    });
+                }, true);
+            })();
+        </script>
+    </head>
+    <body>
+        {% block body %}<h1>Hello world</h1>{% endblock %}
+    </body>
+</html>

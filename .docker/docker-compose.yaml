@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  appstore-symfony-mvc-example-php:
+    container_name: appstore-symfony-mvc-example
+    build:
+      context: ..
+      dockerfile: ./.docker/Dockerfile
+      args:
+        PHP_VERSION: 8.4-fpm-alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../app:/var/www/html
+    environment:
+      APP_ENV: dev # or prod
+      APP_DEBUG: 1 # or 0
+      TRUSTED_PROXIES: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" #important for reverse proxies if used.
+      TRUSTED_HOSTS: "^${SERVER_NAME:-.+}$" #or specify the domain
+    command: php -S 0.0.0.0:8080 -t public
