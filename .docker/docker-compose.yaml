@@ -1,7 +1,7 @@
 version: "3.8"
 services:
-  appstore-symfony-mvc-example-php:
-    container_name: appstore-symfony-mvc-example
+  appstore-symfony-external-payment-example-php:
+    container_name: appstore-symfony-external-payment-example
     build:
       context: ..
       dockerfile: ./.docker/Dockerfile
