@@ -1,0 +1,12 @@
+monolog:
+    handlers:
+        main:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            level: error
+            channels: ~
+        debug_file:
+          type: stream
+          path: "%kernel.logs_dir%/debug.log"
+          level: debug
+          channels: ~

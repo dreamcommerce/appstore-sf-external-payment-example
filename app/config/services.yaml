@@ -13,3 +13,25 @@ services:
     App\Security\HashValidator:
         arguments:
             $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
+
+    GuzzleHttp\Client:
+
+    DreamCommerce\Component\Common\Http\GuzzleClient:
+        arguments:
+            $guzzleClient: '@GuzzleHttp\Client'
+
+    DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient:
+        arguments:
+            $httpClient: '@DreamCommerce\Component\Common\Http\GuzzleClient'
+
+    App\Service\OAuth\OAuthService:
+        arguments:
+            $logger: '@monolog.logger.security'
+            $shopClient: '@DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient'
+            $appClientId: '%env(APP_CLIENT)%'
+            $appSecret: '%env(APP_SECRET)%'
+            $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
+    App\Service\AppStoreEventProcessor:
+        arguments:
+            $logger: '@monolog.logger.security'
+            $oauthService: '@App\Service\OAuth\OAuthService'

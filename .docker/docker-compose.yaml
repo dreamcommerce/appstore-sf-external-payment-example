@@ -1,4 +1,3 @@
-version: "3.8"
 services:
   appstore-symfony-external-payment-example-php:
     container_name: appstore-symfony-external-payment-example
@@ -6,7 +5,7 @@ services:
       context: ..
       dockerfile: ./.docker/Dockerfile
       args:
-        PHP_VERSION: 8.4-fpm-alpine
+        PHP_VERSION: 8.2-fpm-alpine
     ports:
       - "8080:8080"
     volumes:
