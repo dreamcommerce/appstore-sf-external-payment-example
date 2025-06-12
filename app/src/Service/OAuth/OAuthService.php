@@ -2,164 +2,130 @@
 
 namespace App\Service\OAuth;
 
-use App\Service\OAuth\Exception\ShopNotInitializedException;
-use DreamCommerce\Component\Common\Factory\DateTimeFactory;
-use DreamCommerce\Component\ShopAppstore\Api\Authenticator\OAuthAuthenticator;
+use App\Service\Event\AppStoreLifecycleEvent;
+use App\Service\OAuth\Authentication\AuthenticationServiceInterface;
+use App\Service\OAuth\Factory\ShopFactoryInterface;
+use App\Service\OAuth\Persistence\ShopPersistenceServiceInterface;
+use App\Service\OAuth\Token\TokenManagerInterface;
 use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
-use DreamCommerce\Component\ShopAppstore\Model\Application;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
-use DreamCommerce\Component\ShopAppstore\Model\Token;
 use Psr\Log\LoggerInterface;
 
 class OAuthService
 {
     private LoggerInterface $logger;
-    private string $appClientId;
-    private string $appSecret;
-    private string $appStoreSecret;
-
-    private ?OAuthAuthenticator $authenticator = null;
     private ShopClient $shopClient;
-    private ?OAuthShop $shop = null;
+    private TokenManagerInterface $tokenManager;
+    private ShopFactoryInterface $shopFactory;
+    private AuthenticationServiceInterface $authenticationService;
+    private ShopPersistenceServiceInterface $shopPersistenceService;
 
     public function __construct(
         LoggerInterface $logger,
         ShopClient $shopClient,
-        string $appClientId,
-        string $appSecret,
-        string $appStoreSecret
+        TokenManagerInterface $tokenManager,
+        ShopFactoryInterface $shopFactory,
+        AuthenticationServiceInterface $authenticationService,
+        ShopPersistenceServiceInterface $shopPersistenceService
     ) {
         $this->logger = $logger;
         $this->shopClient = $shopClient;
-        $this->appClientId = $appClientId;
-        $this->appSecret = $appSecret;
-        $this->appStoreSecret = $appStoreSecret;
+        $this->tokenManager = $tokenManager;
+        $this->shopFactory = $shopFactory;
+        $this->authenticationService = $authenticationService;
+        $this->shopPersistenceService = $shopPersistenceService;
     }
 
-    public function getAccessToken(): ?string
-    {
-        if (!$this->shop) {
-            throw new ShopNotInitializedException('Cannot get access token: OAuthShop is not initialized.');
-        }
-        return $this->shop->getToken()?->getAccessToken();
-    }
-
-    public function getRefreshToken(): ?string
-    {
-        if (!$this->shop) {
-            throw new ShopNotInitializedException('Cannot get refresh token: OAuthShop is not initialized.');
-        }
-        return $this->shop->getToken()?->getRefreshToken();
-    }
-
-    public function getExpiresAt(): ?\DateTimeInterface
-    {
-        if (!$this->shop) {
-            throw new ShopNotInitializedException('Cannot get expiresAt: OAuthShop is not initialized.');
-        }
-        return $this->shop->getToken()?->getExpiresAt();
-    }
-
-    public function getAuthenticator(): ?OAuthAuthenticator
-    {
-        return $this->authenticator;
-    }
-
-    public function getShop(): OAuthShop
-    {
-        return $this->shop;
-    }
-
+    /**
+     * Get shop client for API requests
+     */
     public function getShopClient(): ShopClient
     {
         return $this->shopClient;
     }
 
-    private function createOAuthAuthenticator(): OAuthAuthenticator
+    /**
+     * Get token manager service
+     */
+    public function getTokenManager(): TokenManagerInterface
     {
-        $this->authenticator = new OAuthAuthenticator($this->getShopClient());
-        return $this->authenticator;
+        return $this->tokenManager;
+    }
+
+    /**
+     * Get shop factory service
+     */
+    public function getShopFactory(): ShopFactoryInterface
+    {
+        return $this->shopFactory;
+    }
+
+    /**
+     * Get authentication service
+     */
+    public function getAuthenticationService(): AuthenticationServiceInterface
+    {
+        return $this->authenticationService;
     }
 
     /**
      * Authorize with OAuth and return token data
      *
+     * @param AppStoreLifecycleEvent $event Object containing shop data and authorization
      * @return array{access_token: string, refresh_token: string, expires_at: \DateTimeInterface|null}|null
      */
-    public function authenticate(string $shopUrl, string $authCode = ''): ?array
+    public function authenticate(AppStoreLifecycleEvent $event): ?array
     {
-        try {
-            $this->logger->debug('Starting OAuth authentication', [
-                'shop_url' => $shopUrl,
-                'auth_code' => $authCode,
-            ]);
-
-            if (!empty($authCode)) {
-                $shop = $this->createOAuthShop($shopUrl, ['auth_code' => $authCode]);
-            } else {
-                $shop = $this->getOAuthShop($shopUrl);
-            }
-
-            if ($shop->isAuthenticated()) {
-                $this->logger->info('Shop is already authenticated');
-            } else {
-                $authenticator = $this->createOAuthAuthenticator();
-                $authenticator->authenticate($shop);
-                $this->logger->info('OAuth authentication successful');
-            }
-
-            return [
-                'access_token' => $this->getAccessToken(),
-                'refresh_token' => $this->getRefreshToken(),
-                'expires_at' => $this->getExpiresAt()
-            ];
-        } catch (\Exception $e) {
-            $this->logger->error('OAuth authentication error', [
-                'shop_url' => $shopUrl,
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
+        $result = $this->authenticationService->processAuthentication($event);
+        if (!$result) {
             return null;
         }
-    }
 
-    private function createApplication(): Application
-    {
-        return new Application(
-            $this->appClientId,
-            $this->appSecret,
-            $this->appStoreSecret
-        );
-    }
-
-    private function createOAuthShop(string $shopUrl, array $shopData = []): OAuthShop
-    {
-        $dateTimeFactory = new DateTimeFactory();
-        $shop = new OAuthShop($shopData, $dateTimeFactory);
-        $shop->setApplication($this->createApplication());
-        $shop->setUri($this->shopClient->getHttpClient()->createUri($shopUrl));
-
-        $this->shop = $shop;
-        return $shop;
+        return $result['token_data'];
     }
 
     /**
-     * Returns an authorized OAuthShop instance for the given shop URL.
+     * Updates application version for existing shop
+     *
+     * @param AppStoreLifecycleEvent $event Event containing shop data and version information
+     * @return bool True if update was successful, false otherwise
      */
-    public function getOAuthShop(string $shopUrl): ?OAuthShop
+    public function updateApplicationVersion(AppStoreLifecycleEvent $event): bool
     {
-        $tokenData = [
-            'refresh_token' => '',
-            'access_token' => '',
-        ]; // upcoming, loading shop by ID from DB
+        $shopData = [
+            'id' => $event->shopId,
+            'shop_url' => $event->shopUrl,
+            'version' => $event->version
+        ];
 
-        $shop = $this->createOAuthShop($shopUrl);
-        $token = new Token();
-        $token->setAccessToken($tokenData['access_token']);
-        $token->setRefreshToken($tokenData['refresh_token']);
-        $shop->setToken($token);
+        try {
+            $shop = $this->shopFactory->getOAuthShop($shopData);
+            return $this->shopPersistenceService->updateApplicationVersion($shop, $event);
+        } catch (\Exception $e) {
+            $this->logger->error('Error updating application version', [
+                'shop_id' => $event->shopId,
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
 
-        return $shop;
+    /**
+     * Get shop instance by shop data
+     *
+     * @param array $shopData Shop data (must contain 'id' and 'shop_url')
+     * @return OAuthShop|null Shop instance or null on error
+     */
+    public function getShop(array $shopData): ?OAuthShop
+    {
+        try {
+            return $this->shopFactory->getOAuthShop($shopData);
+        } catch (\Exception $e) {
+            $this->logger->error('Error getting shop instance', [
+                'shop_id' => $shopData['id'] ?? 'unknown',
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 }

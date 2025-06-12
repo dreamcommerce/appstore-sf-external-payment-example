@@ -7,12 +7,32 @@ services:
       args:
         PHP_VERSION: 8.2-fpm-alpine
     ports:
-      - "8080:8080"
+      - '8080:8081'
     volumes:
       - ../app:/var/www/html
     environment:
       APP_ENV: dev # or prod
       APP_DEBUG: 1 # or 0
+      DATABASE_URL: "mysql://appuser:appuserpass@database:3306/appstore"
       TRUSTED_PROXIES: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" #important for reverse proxies if used.
-      TRUSTED_HOSTS: "^${SERVER_NAME:-.+}$" #or specify the domain
-    command: php -S 0.0.0.0:8080 -t public
+      TRUSTED_HOSTS: "^${SERVER_NAME:-.+}$"  #or specify the domain
+    depends_on:
+      - database
+    entrypoint: ["/bin/sh", "-c", "php bin/console cache:clear && php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate --no-interaction && php -S 0.0.0.0:8081 -t public"]
+
+  database:
+    image: mysql:8.0
+    container_name: database
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: appstore
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: appuserpass
+    ports:
+      - '3306:3306'
+    volumes:
+      - database_data:/var/lib/mysql
+
+volumes:
+  database_data:

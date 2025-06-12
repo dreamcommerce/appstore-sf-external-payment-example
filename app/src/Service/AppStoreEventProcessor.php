@@ -30,14 +30,22 @@ class AppStoreEventProcessor
              *      and is used to obtain the refresh token (required to make shop API requests).
              * You should store it for each installation.
              */
-            $authCode = $event->authCode;
-            $this->oauthService->authenticate($event->shopUrl, $authCode);
-            $this->createExternalPayment($event->shopUrl); //wynieść to do jakiegoś event listenera może?
+            $this->oauthService->authenticate($event);
+            $this->createExternalPayment($event); //wynieść to do jakiegoś event listenera może?
         }
 
         if ($event->action === AppStoreLifecycleAction::UPGRADE) {
-            $tokens = $this->oauthService->authenticate($event->shopUrl);
-            $this->logger->debug('Tokens after update and auth', $tokens ?? []);
+            $tokens = $this->oauthService->authenticate($event);
+
+           if ($tokens) {
+               $updateResult = $this->oauthService->updateApplicationVersion($event);
+               $this->logger->info('Application version update during upgrade', [
+                   'shop_id' => $event->shopId,
+                   'shop_url' => $event->shopUrl,
+                   'version' => $event->version ?? 'unknown',
+                   'success' => $updateResult
+               ]);
+           }
         }
 
         if ($event->action === AppStoreLifecycleAction::UNINSTALL) {
@@ -46,7 +54,7 @@ class AppStoreEventProcessor
         }
     }
 
-    private function createExternalPayment(string $shopUrl): void
+    private function createExternalPayment(AppStoreLifecycleEvent $event): void
     {
         $paymentData = [
             'currencies'   => [1],
@@ -62,7 +70,16 @@ class AppStoreEventProcessor
         ];
 
         try {
-            $shop = $this->oauthService->getOAuthShop($shopUrl);
+            $shopData = [
+                'shop_url' => $event->shopUrl,
+                'id' => $event->shopId
+            ];
+
+            $shop = $this->oauthService->getShop($shopData);
+            if (!$shop) {
+                throw new \RuntimeException('Failed to get shop instance');
+            }
+
             $shopClient = $this->oauthService->getShopClient();
             if (!$shopClient) {
                 throw new \RuntimeException('ShopClient is missing. Make sure the authorization has been completed.');
@@ -71,12 +88,12 @@ class AppStoreEventProcessor
             $paymentResource = new PaymentResource($shopClient);
             $result = $paymentResource->insert($shop, $paymentData);
             $this->logger->info('Success: External payment created using PaymentResource::insert', [
-                'shop_url' => $shopUrl,
-                'result' => $result,
+                'shop_url' => $shop->getUri(),
+                'result' => $result->getData(),
             ]);
         } catch (ApiException $e) {
             $this->logger->error('Error: Failed to create external payment using PaymentResource::insert', [
-                'shop_url' => $shopUrl,
+                'shop_url' => $event->shopUrl,
                 'error_message' => $e->getMessage(),
                 'error_code' => $e->getCode(),
                 'request_data' => $paymentData,
