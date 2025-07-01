@@ -47,9 +47,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
                 ->setShopUrl((string)$shop->getUri())
                 ->setAuthCode($authCode)
                 ->setApplicationVersion(($shop->getVersion() ?? 1))
-                ->setTokens(
-                    json_encode($this->tokenManager->prepareTokenResponse($shop)),
-                );
+                ->setTokens($this->tokenManager->prepareTokenResponse($shop));
 
             $this->shopInstalledRepository->save($shopInstalled);
             $this->logger->info('Shop installation data saved successfully', [

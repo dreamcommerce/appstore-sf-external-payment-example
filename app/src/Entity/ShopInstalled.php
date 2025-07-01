@@ -25,8 +25,8 @@ class ShopInstalled
     #[ORM\Column(type: 'string', length: 100)]
     private string $authCode;
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $tokens = null;
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $tokens = null;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
@@ -85,12 +85,12 @@ class ShopInstalled
         return $this;
     }
 
-    public function getTokens(): ?string
+    public function getTokens(): array
     {
-        return $this->tokens;
+        return $this->tokens ?? [];
     }
 
-    public function setTokens(?string $tokens): self
+    public function setTokens(?array $tokens): self
     {
         $this->tokens = $tokens;
         return $this;

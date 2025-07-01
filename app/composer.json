@@ -12,7 +12,6 @@
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.3",
         "dreamcommerce/shop-appstore-lib": "dev-dev3.0",
-        "guzzlehttp/guzzle": "^6.2",
         "symfony/console": "7.2.*",
         "symfony/doctrine-messenger": "7.2.*",
         "symfony/dotenv": "7.2.*",
