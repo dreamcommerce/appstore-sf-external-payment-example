@@ -58,43 +58,56 @@ class ShopFactory implements ShopFactoryInterface
             return $this->createOAuthShop($shopData);
         }
 
-        $shopData = new Shop(
+        $shopFromDb = new Shop(
             $shopInstalled->getShop(), $shopInstalled->getShopUrl()
         );
-        $shop = $this->createOAuthShop($shopData);
-        $tokens = $shopInstalled->getTokens();
-        if (!$tokens) {
+
+        $shop = $this->createOAuthShop($shopFromDb);
+        $this->addTokenToShop($shop, $shopInstalled->getTokens(), $shopId, $shopFromDb->getShopUrl());
+
+        return $shop;
+    }
+
+    private function addTokenToShop(OAuthShop $shop, ?array $tokens, string $shopId, ?string $shopUrl): void
+    {
+        if (empty($tokens) ) {
             $this->logger->debug('No saved token data found for shop', [
                 'shop_id' => $shopId,
-                'shop_url' => $shopData->getShopUrl() ?? null
+                'shop_url' => $shopUrl
             ]);
-            return $shop;
+            return;
         }
+
+        if (!isset($tokens['access_token'], $tokens['refresh_token'])) {
+            $this->logger->debug('Incomplete token data for shop', [
+                'shop_id' => $shopId,
+                'shop_url' => $shopUrl
+            ]);
+            return;
+        }
+
         try {
-            if (isset($tokens['access_token'], $tokens['refresh_token'])) {
-                $token = new Token();
-                $token->setAccessToken($tokens['access_token']);
-                $token->setRefreshToken($tokens['refresh_token']);
+            $token = new Token();
+            $token->setAccessToken($tokens['access_token']);
+            $token->setRefreshToken($tokens['refresh_token']);
 
-                if (isset($tokens['expires_at']) && $tokens['expires_at']) {
-                    $expiresAt = new \DateTime($tokens['expires_at']);
-                    $token->setExpiresAt($expiresAt);
-                }
-
-                $shop->setToken($token);
-                $this->logger->debug('Token data retrieved from repository', [
-                    'shop_id' => $shopId,
-                    'shop_url' => $shopData->getShopUrl() ?? null,
-                    'has_access_token' => true
-                ]);
+            if (isset($tokens['expires_at']) && $tokens['expires_at']) {
+                $expiresAt = new \DateTime($tokens['expires_at']);
+                $token->setExpiresAt($expiresAt);
             }
+
+            $shop->setToken($token);
+            $this->logger->debug('Token data retrieved from repository', [
+                'shop_id' => $shopId,
+                'shop_url' => $shopUrl,
+                'has_access_token' => true
+            ]);
         } catch (\Exception $e) {
             $this->logger->error('Error while processing token data', [
                 'shop_id' => $shopId,
-                'shop_url' => $shopData->getShopUrl() ?? null,
+                'shop_url' => $shopUrl,
                 'error' => $e->getMessage()
             ]);
         }
-        return $shop;
     }
 }
