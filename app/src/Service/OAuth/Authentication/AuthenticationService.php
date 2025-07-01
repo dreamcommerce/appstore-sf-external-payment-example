@@ -6,7 +6,7 @@ use App\Service\Event\AppStoreLifecycleEvent;
 use App\Service\OAuth\Factory\AuthenticatorFactoryInterface;
 use App\Service\OAuth\Factory\ShopFactoryInterface;
 use App\Service\OAuth\Persistence\ShopPersistenceServiceInterface;
-use App\Service\OAuth\Token\TokenManagerInterface;
+use App\Service\Shop\Shop;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 use Psr\Log\LoggerInterface;
 
@@ -16,78 +16,56 @@ class AuthenticationService implements AuthenticationServiceInterface
     private AuthenticatorFactoryInterface $authenticatorFactory;
     private ShopFactoryInterface $shopFactory;
     private ShopPersistenceServiceInterface $shopPersistenceService;
-    private TokenManagerInterface $tokenManager;
 
     public function __construct(
         LoggerInterface $logger,
         AuthenticatorFactoryInterface $authenticatorFactory,
         ShopFactoryInterface $shopFactory,
         ShopPersistenceServiceInterface $shopPersistenceService,
-        TokenManagerInterface $tokenManager
     ) {
         $this->logger = $logger;
         $this->authenticatorFactory = $authenticatorFactory;
         $this->shopFactory = $shopFactory;
         $this->shopPersistenceService = $shopPersistenceService;
-        $this->tokenManager = $tokenManager;
     }
 
     /**
      * Perform authentication for the given shop
      *
      * @param OAuthShop $shop Shop to authenticate
-     * @return bool True if authentication was successful
+     * @throws \Exception on authentication failure
      */
-    public function authenticate(OAuthShop $shop): bool
+    public function authenticate(OAuthShop $shop): void
     {
-        try {
-            if ($shop->isAuthenticated()) {
-                $this->logger->info('Shop is already authenticated');
-                return true;
-            }
-
-            $authenticator = $this->authenticatorFactory->createAuthenticator();
-            $authenticator->authenticate($shop);
-            $this->logger->info('OAuth authentication successful');
-
-            return true;
-        } catch (\Exception $e) {
-            $this->logger->error('OAuth authentication error', [
-                'shop_id' => $shop->getId(),
-                'shop_url' => $shop->getUri(),
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            return false;
+        if ($shop->isAuthenticated()) {
+            $this->logger->info('Shop is already authenticated');
+            return;
         }
+
+        $authenticator = $this->authenticatorFactory->createAuthenticator();
+        $authenticator->authenticate($shop);
+        $this->logger->info('OAuth authentication successful');
     }
 
     /**
      * Process full authentication flow for the given event
      *
      * @param AppStoreLifecycleEvent $event Event containing shop data
-     * @return array{shop: OAuthShop, token_data: array}|null Authentication result or null on failure
+     * @throws \Exception on failure
      */
-    public function processAuthentication(AppStoreLifecycleEvent $event): ?array
+    public function processAuthentication(AppStoreLifecycleEvent $event): void
     {
         try {
             $shopData = $this->prepareShopDataFromEvent($event);
             $shop = $this->shopFactory->getOAuthShop($shopData);
 
-            if (!$shop->isAuthenticated()) {
-                if (!$this->authenticate($shop)) {
-                    return null;
-                }
-                $this->shopPersistenceService->saveShopInstalled($shop, $event->authCode);
-            } else {
+            if ($shop->isAuthenticated()) {
                 $this->logger->info('Shop is already authenticated');
+                return;
             }
 
-            return [
-                'shop' => $shop,
-                'token_data' => $this->tokenManager->prepareTokenResponse($shop)
-            ];
+            $this->authenticate($shop);
+            $this->shopPersistenceService->saveShopInstalled($shop, $event->authCode);
         } catch (\Exception $e) {
             $this->logger->error('Authentication process error', [
                 'shop_id' => $event->shopId,
@@ -95,32 +73,22 @@ class AuthenticationService implements AuthenticationServiceInterface
                 'error_message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return null;
+            throw $e;
         }
     }
 
     /**
-     * Prepares shop data based on the event
+     * Prepares ShopData object based on the event
      */
-    private function prepareShopDataFromEvent(AppStoreLifecycleEvent $event): array
+    private function prepareShopDataFromEvent(AppStoreLifecycleEvent $event): Shop
     {
-        $shopData = [
-            'id' =>  $event->shopId,
-            'shop_url' => $event->shopUrl,
-            'version' => $event->version
-        ];
-
-        if (!empty($event->authCode)) {
-            $shopData['auth_code'] = $event->authCode;
-        }
-
-        $this->logger->debug('Prepared shop data', [
+        $this->logger->debug('Preparing shop data from event', [
             'id' => $event->shopId,
             'shop_url' => $event->shopUrl,
             'version' => $event->version,
             'has_auth_code' => !empty($event->authCode),
         ]);
 
-        return $shopData;
+        return Shop::fromEvent($event);
     }
 }

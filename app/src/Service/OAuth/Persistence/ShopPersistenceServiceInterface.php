@@ -12,16 +12,16 @@ interface ShopPersistenceServiceInterface
      *
      * @param OAuthShop $shop Shop instance to save
      * @param string $authCode Authorization code from the event
-     * @return bool True if shop was saved successfully
+     * @throws \RuntimeException on error
      */
-    public function saveShopInstalled(OAuthShop $shop, string $authCode): bool;
+    public function saveShopInstalled(OAuthShop $shop, string $authCode): void;
 
     /**
      * Updates application version for existing shop installation
      *
      * @param OAuthShop $shop Shop instance to update
      * @param AppStoreLifecycleEvent $event Event containing shop data and version information
-     * @return bool True if update was successful, false otherwise
+     * @throws \RuntimeException on error
      */
-    public function updateApplicationVersion(OAuthShop $shop, AppStoreLifecycleEvent $event): bool;
+    public function updateApplicationVersion(OAuthShop $shop, AppStoreLifecycleEvent $event): void;
 }

@@ -47,7 +47,7 @@ class TokenManager implements TokenManagerInterface
         return [
             'access_token' => $this->getAccessToken($shop),
             'refresh_token' => $this->getRefreshToken($shop),
-            'expires_at' => $this->getExpiresAt($shop)
+            'expires_at' => $this->getExpiresAt($shop) ? $this->getExpiresAt($shop)->format('c') : null,
         ];
     }
 }

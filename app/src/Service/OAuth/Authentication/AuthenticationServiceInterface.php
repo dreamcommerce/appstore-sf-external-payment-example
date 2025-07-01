@@ -11,15 +11,15 @@ interface AuthenticationServiceInterface
      * Perform authentication for the given shop
      *
      * @param OAuthShop $shop Shop to authenticate
-     * @return bool True if authentication was successful
+     * @throws \Exception on authentication failure
      */
-    public function authenticate(OAuthShop $shop): bool;
+    public function authenticate(OAuthShop $shop): void;
 
     /**
      * Process full authentication flow for the given event
      *
      * @param AppStoreLifecycleEvent $event Event containing shop data
-     * @return array{shop: OAuthShop, token_data: array}|null Authentication result or null on failure
+     * @throws \Exception on failure
      */
-    public function processAuthentication(AppStoreLifecycleEvent $event): ?array;
+    public function processAuthentication(AppStoreLifecycleEvent $event): void;
 }

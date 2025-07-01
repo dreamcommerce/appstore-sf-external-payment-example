@@ -34,5 +34,26 @@ services:
     volumes:
       - database_data:/var/lib/mysql
 
+  messenger-worker:
+    build:
+      context: ..
+      dockerfile: ./.docker/Dockerfile
+      args:
+        PHP_VERSION: 8.2-fpm-alpine
+    container_name: appstore-symfony-external-payment-example-messenger-worker
+    command: php bin/console messenger:consume async
+    depends_on:
+      - appstore-symfony-external-payment-example-php
+      - database
+    restart: always
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: 1
+      DATABASE_URL: "mysql://appuser:appuserpass@database:3306/appstore"
+      TRUSTED_PROXIES: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      TRUSTED_HOSTS: "^${SERVER_NAME:-.+}$"
+    volumes:
+      - ../app:/var/www/html
+
 volumes:
   database_data:

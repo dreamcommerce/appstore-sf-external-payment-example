@@ -30,48 +30,39 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
      *
      * @param OAuthShop $shop Shop instance to save
      * @param string $authCode Authorization code from the event
-     * @return bool True if shop was saved successfully
+     * @throws \RuntimeException on error
      */
-    public function saveShopInstalled(OAuthShop $shop, string $authCode): bool
+    public function saveShopInstalled(OAuthShop $shop, string $authCode): void
     {
         if (!$shop->getToken()) {
             $this->logger->warning('Cannot save shop: Token is missing', [
                 'shop_id' => $shop->getId()
             ]);
-            return false;
+            throw new \RuntimeException('Cannot save shop: Token is missing for shop_id: ' . $shop->getId());
         }
 
         try {
-            $shopInstalled = new ShopInstalled();
-            $shopInstalled->setShop($shop->getId() ?? '');
-            $shopInstalled->setShopUrl((string)$shop->getUri());
-            $shopInstalled->setAuthCode($authCode);
-            $shopInstalled->setApplicationVersion($shop->getVersion() ?? 1);
-
-            $tokenData = [
-                'access_token'  => $this->tokenManager->getAccessToken($shop),
-                'refresh_token' => $this->tokenManager->getRefreshToken($shop),
-                'expires_at'    => $this->tokenManager->getExpiresAt($shop) ?
-                    $this->tokenManager->getExpiresAt($shop)->format('c') : null,
-            ];
-            $shopInstalled->setTokens(json_encode($tokenData));
+            $shopInstalled = (new ShopInstalled())
+                ->setShop((string)$shop->getId())
+                ->setShopUrl((string)$shop->getUri())
+                ->setAuthCode($authCode)
+                ->setApplicationVersion(($shop->getVersion() ?? 1))
+                ->setTokens(
+                    json_encode($this->tokenManager->prepareTokenResponse($shop)),
+                );
 
             $this->shopInstalledRepository->save($shopInstalled);
-
             $this->logger->info('Shop installation data saved successfully', [
                 'shop_id' => $shop->getId(),
                 'shop_url' => $shop->getUri()
             ]);
-
-            return true;
         } catch (\Exception $e) {
             $this->logger->error('Error while saving shop installation data', [
                 'shop_url' => $shop->getUri(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
-            return false;
+            throw $e;
         }
     }
 
@@ -80,21 +71,21 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
      *
      * @param OAuthShop $shop Shop instance to update
      * @param AppStoreLifecycleEvent $event Event containing shop data and version information
-     * @return bool True if update was successful, false otherwise
+     * @throws \RuntimeException on error
      */
-    public function updateApplicationVersion(OAuthShop $shop, AppStoreLifecycleEvent $event): bool
+    public function updateApplicationVersion(OAuthShop $shop, AppStoreLifecycleEvent $event): void
     {
+        $shopId = $shop->getId();
+        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopId]);
+
+        if (!$shopInstalled) {
+            $this->logger->warning('Cannot update version: Shop not found in repository', [
+                'shop_id' => $shopId
+            ]);
+            throw new \RuntimeException('Cannot update version: Shop not found in repository for shop_id: ' . $shopId);
+        }
+
         try {
-            $shopId = $shop->getId();
-            $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopId]);
-
-            if (!$shopInstalled) {
-                $this->logger->warning('Cannot update version: Shop not found in repository', [
-                    'shop_id' => $shopId
-                ]);
-                return false;
-            }
-
             $shopInstalled->setApplicationVersion($event->version ?? $shop->getVersion() ?? 1);
 
             if ($shop->getToken()) {
@@ -114,8 +105,6 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
                 'shop_url' => $event->shopUrl,
                 'version' => $event->version ?? $shop->getVersion() ?? 1
             ]);
-
-            return true;
         } catch (\Exception $e) {
             $this->logger->error('Error while updating application version', [
                 'shop_id' => $event->shopId,
@@ -123,8 +112,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
                 'error_message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
-            return false;
+            throw $e;
         }
     }
 }

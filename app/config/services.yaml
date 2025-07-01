@@ -2,6 +2,11 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            $appClientId: '%env(APP_CLIENT)%'
+            $appSecret: '%env(APP_SECRET)%'
+            $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
+            Psr\Log\LoggerInterface $logger: '@monolog.logger.app'
 
     monolog.logger.app:
         class: Monolog\Logger
@@ -22,54 +27,6 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Security\HashValidator:
-        arguments:
-            $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
-
-    GuzzleHttp\Client:
-
-    DreamCommerce\Component\Common\Http\GuzzleClient:
-        arguments:
-            $guzzleClient: '@GuzzleHttp\Client'
-
-    DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient:
-        arguments:
-            $httpClient: '@DreamCommerce\Component\Common\Http\GuzzleClient'
-
-    App\Service\OAuth\Factory\ApplicationFactory:
-        arguments:
-            $appClientId: '%env(APP_CLIENT)%'
-            $appSecret: '%env(APP_SECRET)%'
-            $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
-
-    App\Service\OAuth\Token\TokenManager:
-        autowire: true
-
-    App\Service\OAuth\Factory\AuthenticatorFactory:
-        arguments:
-            $shopClient: '@DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient'
-
-    App\Service\OAuth\Factory\ShopFactory:
-        arguments:
-            $logger: '@monolog.logger.app'
-            $shopClient: '@DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient'
-            $shopInstalledRepository: '@App\Repository\ShopInstalledRepository'
-            $applicationFactory: '@App\Service\OAuth\Factory\ApplicationFactory'
-
-    App\Service\OAuth\Persistence\ShopPersistenceService:
-        arguments:
-            $logger: '@monolog.logger.app'
-            $shopInstalledRepository: '@App\Repository\ShopInstalledRepository'
-            $tokenManager: '@App\Service\OAuth\Token\TokenManager'
-
-    App\Service\OAuth\Authentication\AuthenticationService:
-        arguments:
-            $logger: '@monolog.logger.app'
-            $authenticatorFactory: '@App\Service\OAuth\Factory\AuthenticatorFactory'
-            $shopFactory: '@App\Service\OAuth\Factory\ShopFactory'
-            $shopPersistenceService: '@App\Service\OAuth\Persistence\ShopPersistenceService'
-            $tokenManager: '@App\Service\OAuth\Token\TokenManager'
-
     App\Service\OAuth\Token\TokenManagerInterface: '@App\Service\OAuth\Token\TokenManager'
     App\Service\OAuth\Factory\ApplicationFactoryInterface: '@App\Service\OAuth\Factory\ApplicationFactory'
     App\Service\OAuth\Factory\ShopFactoryInterface: '@App\Service\OAuth\Factory\ShopFactory'
@@ -77,16 +34,9 @@ services:
     App\Service\OAuth\Factory\AuthenticatorFactoryInterface: '@App\Service\OAuth\Factory\AuthenticatorFactory'
     App\Service\OAuth\Authentication\AuthenticationServiceInterface: '@App\Service\OAuth\Authentication\AuthenticationService'
 
-    App\Service\OAuth\OAuthService:
-        arguments:
-            $logger: '@monolog.logger.app'
-            $shopClient: '@DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient'
-            $tokenManager: '@App\Service\OAuth\Token\TokenManagerInterface'
-            $shopFactory: '@App\Service\OAuth\Factory\ShopFactoryInterface'
-            $authenticationService: '@App\Service\OAuth\Authentication\AuthenticationServiceInterface'
-            $shopPersistenceService: '@App\Service\OAuth\Persistence\ShopPersistenceServiceInterface'
+    # Rejestracja zewnętrznych usług
+    GuzzleHttp\Client:
 
-    App\Service\AppStoreEventProcessor:
-        arguments:
-            $logger: '@monolog.logger.app'
-            $oauthService: '@App\Service\OAuth\OAuthService'
+    DreamCommerce\Component\Common\Http\GuzzleClient:
+
+    DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient:
