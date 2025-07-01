@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Service\Shop;
+namespace App\Domain\Shop\Model;
+
+use App\Service\Event\AppStoreLifecycleEvent;
 
 class Shop
 {
     private string $shopId;
-
     private string $shopUrl;
     private ?string $version;
     private ?string $authCode;
@@ -20,14 +21,24 @@ class Shop
         $this->authCode = $authCode;
     }
 
-    public function getShopUrl(): string
+    public static function fromEvent(AppStoreLifecycleEvent $event): self
     {
-        return $this->shopUrl;
+        return new self(
+            $event->shopId,
+            $event->shopUrl,
+            $event->version,
+            $event->authCode
+        );
     }
 
     public function getShopId(): string
     {
         return $this->shopId;
+    }
+
+    public function getShopUrl(): string
+    {
+        return $this->shopUrl;
     }
 
     public function getVersion(): ?string
@@ -40,21 +51,11 @@ class Shop
         return $this->authCode;
     }
 
-    public static function fromEvent(\App\Service\Event\AppStoreLifecycleEvent $event): self
-    {
-        return new self(
-            (string)$event->shopId,
-            $event->shopUrl,
-            $event->version,
-            $event->authCode
-        );
-    }
-
     public function toArray(): array
     {
         $data = [
-            'id' => $this->shopId,
-            'shop_url' => $this->shopUrl
+            'shop' => $this->shopId,
+            'url' => $this->shopUrl
         ];
 
         if ($this->version !== null) {
@@ -66,19 +67,5 @@ class Shop
         }
 
         return $data;
-    }
-
-    public function withAuthCode(string $authCode): self
-    {
-        return new self(
-            $this->shopId, $this->shopUrl, $this->version, $authCode
-        );
-    }
-
-    public function withVersion(string $version): self
-    {
-        return new self(
-            $this->shopId, $this->shopUrl, $version, $this->authCode
-        );
     }
 }

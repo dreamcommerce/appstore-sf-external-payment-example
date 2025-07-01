@@ -40,8 +40,7 @@ class AppStoreEventProcessor
         if ($event->action === AppStoreLifecycleAction::UPGRADE) {
             try {
                 $this->oauthService->authenticate($event);
-                $this->bus->dispatch(new CreateExternalPaymentMessage($event));
-//                $this->oauthService->updateApplicationVersion($event);
+                $this->oauthService->updateApplicationVersion($event);
                 $this->logger->info('Application version update during upgrade', [
                     'shop_id' => $event->shopId,
                     'shop_url' => $event->shopUrl,

@@ -3,10 +3,10 @@
 namespace App\Service\OAuth\Authentication;
 
 use App\Service\Event\AppStoreLifecycleEvent;
-use App\Service\OAuth\Factory\AuthenticatorFactoryInterface;
-use App\Service\OAuth\Factory\ShopFactoryInterface;
-use App\Service\OAuth\Persistence\ShopPersistenceServiceInterface;
-use App\Service\Shop\Shop;
+use App\OAuth\Factory\AuthenticatorFactoryInterface;
+use App\Factory\ShopFactoryInterface;
+use App\Service\Persistence\ShopPersistenceServiceInterface;
+use App\Domain\Shop\Model\Shop;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 use Psr\Log\LoggerInterface;
 

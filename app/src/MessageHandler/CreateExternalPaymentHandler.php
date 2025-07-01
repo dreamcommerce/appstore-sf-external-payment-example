@@ -2,9 +2,9 @@
 
 namespace App\MessageHandler;
 
+use App\Domain\Shop\Model\Shop;
 use App\Message\CreateExternalPaymentMessage;
 use App\Service\OAuth\OAuthService;
-use App\Service\Shop\Shop;
 use DreamCommerce\Component\ShopAppstore\Api\Exception\ApiException;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\PaymentResource;
 use Psr\Log\LoggerInterface;

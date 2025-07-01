@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\OAuth\Token;
+namespace App\Service\Token;
 
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 

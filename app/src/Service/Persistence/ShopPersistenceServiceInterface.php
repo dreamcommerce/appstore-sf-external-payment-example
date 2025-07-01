@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\OAuth\Persistence;
+namespace App\Service\Persistence;
 
 use App\Service\Event\AppStoreLifecycleEvent;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Service\OAuth\Factory;
+namespace App\Factory;
 
+use App\Domain\Shop\Model\Shop;
 use App\Entity\ShopInstalled;
-use App\Repository\ShopInstalledRepository;
-use App\Service\Shop\Shop;
+use App\Provider\ShopProvider;
 use DreamCommerce\Component\Common\Factory\DateTimeFactory;
 use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
@@ -15,18 +15,18 @@ class ShopFactory implements ShopFactoryInterface
 {
     private LoggerInterface $logger;
     private ShopClient $shopClient;
-    private ShopInstalledRepository $shopInstalledRepository;
     private ApplicationFactoryInterface $applicationFactory;
+    private ShopProvider $shopProvider;
 
     public function __construct(
         LoggerInterface $logger,
         ShopClient $shopClient,
-        ShopInstalledRepository $shopInstalledRepository,
+        ShopProvider $shopProvider,
         ApplicationFactoryInterface $applicationFactory
     ) {
         $this->logger = $logger;
         $this->shopClient = $shopClient;
-        $this->shopInstalledRepository = $shopInstalledRepository;
+        $this->shopProvider = $shopProvider;
         $this->applicationFactory = $applicationFactory;
     }
 
@@ -52,7 +52,7 @@ class ShopFactory implements ShopFactoryInterface
         }
 
         /** @var ShopInstalled $shopInstalled */
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => (string)$shopId]);
+        $shopInstalled = $this->shopProvider->getByShopId($shopId);
         if (!$shopInstalled) {
             $this->logger->warning('Shop not found for the given ID', ['id' => $shopId]);
             return $this->createOAuthShop($shopData);
@@ -62,8 +62,8 @@ class ShopFactory implements ShopFactoryInterface
             $shopInstalled->getShop(), $shopInstalled->getShopUrl()
         );
         $shop = $this->createOAuthShop($shopData);
-        $tokensJson = $shopInstalled->getTokens();
-        if (!$tokensJson) {
+        $tokens = $shopInstalled->getTokens();
+        if (!$tokens) {
             $this->logger->debug('No saved token data found for shop', [
                 'shop_id' => $shopId,
                 'shop_url' => $shopData->getShopUrl() ?? null
@@ -71,15 +71,13 @@ class ShopFactory implements ShopFactoryInterface
             return $shop;
         }
         try {
-            $tokensData = json_decode($tokensJson, true, 512, JSON_THROW_ON_ERROR);
-
-            if (isset($tokensData['access_token'], $tokensData['refresh_token'])) {
+            if (isset($tokens['access_token'], $tokens['refresh_token'])) {
                 $token = new Token();
-                $token->setAccessToken($tokensData['access_token']);
-                $token->setRefreshToken($tokensData['refresh_token']);
+                $token->setAccessToken($tokens['access_token']);
+                $token->setRefreshToken($tokens['refresh_token']);
 
-                if (isset($tokensData['expires_at']) && $tokensData['expires_at']) {
-                    $expiresAt = new \DateTime($tokensData['expires_at']);
+                if (isset($tokens['expires_at']) && $tokens['expires_at']) {
+                    $expiresAt = new \DateTime($tokens['expires_at']);
                     $token->setExpiresAt($expiresAt);
                 }
 
@@ -91,7 +89,7 @@ class ShopFactory implements ShopFactoryInterface
                 ]);
             }
         } catch (\Exception $e) {
-            $this->logger->error('Error while decoding token data', [
+            $this->logger->error('Error while processing token data', [
                 'shop_id' => $shopId,
                 'shop_url' => $shopData->getShopUrl() ?? null,
                 'error' => $e->getMessage()

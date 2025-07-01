@@ -2,11 +2,11 @@
 
 namespace App\Service\OAuth;
 
+use App\Domain\Shop\Model\Shop;
 use App\Service\Event\AppStoreLifecycleEvent;
 use App\Service\OAuth\Authentication\AuthenticationServiceInterface;
-use App\Service\OAuth\Factory\ShopFactoryInterface;
-use App\Service\OAuth\Persistence\ShopPersistenceServiceInterface;
-use App\Service\Shop\Shop;
+use App\Factory\ShopFactoryInterface;
+use App\Service\Persistence\ShopPersistenceServiceInterface;
 use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 

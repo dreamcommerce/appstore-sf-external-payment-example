@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Service\OAuth\Factory;
+namespace App\Factory;
 
-use App\Service\Shop\Shop;
+use App\Domain\Shop\Model\Shop;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 
 interface ShopFactoryInterface

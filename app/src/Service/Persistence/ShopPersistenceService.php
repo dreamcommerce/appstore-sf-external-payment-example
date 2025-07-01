@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Service\OAuth\Persistence;
+namespace App\Service\Persistence;
 
 use App\Entity\ShopInstalled;
 use App\Repository\ShopInstalledRepository;
 use App\Service\Event\AppStoreLifecycleEvent;
-use App\Service\OAuth\Token\TokenManagerInterface;
+use App\Service\Token\TokenManagerInterface;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 use Psr\Log\LoggerInterface;
 
@@ -73,7 +73,15 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
      */
     public function updateApplicationVersion(OAuthShop $shop, AppStoreLifecycleEvent $event): void
     {
-        $shopId = $shop->getId();
+        $shopId = $event->shopId ?? $shop->getId();
+
+        if (empty($shopId)) {
+            $this->logger->warning('Cannot update version: Shop ID is missing', [
+                'shop_url' => $event->shopUrl
+            ]);
+            throw new \RuntimeException('Cannot update version: Shop ID is missing');
+        }
+
         $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopId]);
 
         if (!$shopInstalled) {
@@ -87,13 +95,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
             $shopInstalled->setApplicationVersion($event->version ?? $shop->getVersion() ?? 1);
 
             if ($shop->getToken()) {
-                $tokenData = [
-                    'access_token'  => $this->tokenManager->getAccessToken($shop),
-                    'refresh_token' => $this->tokenManager->getRefreshToken($shop),
-                    'expires_at'    => $this->tokenManager->getExpiresAt($shop) ?
-                        $this->tokenManager->getExpiresAt($shop)->format('c') : null,
-                ];
-                $shopInstalled->setTokens(json_encode($tokenData));
+                $shopInstalled->setTokens($this->tokenManager->prepareTokenResponse($shop));
             }
 
             $this->shopInstalledRepository->save($shopInstalled);

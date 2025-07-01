@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\OAuth\Factory;
+namespace App\Factory;
 
 use DreamCommerce\Component\ShopAppstore\Model\Application;
 

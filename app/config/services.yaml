@@ -27,11 +27,12 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Service\OAuth\Token\TokenManagerInterface: '@App\Service\OAuth\Token\TokenManager'
-    App\Service\OAuth\Factory\ApplicationFactoryInterface: '@App\Service\OAuth\Factory\ApplicationFactory'
-    App\Service\OAuth\Factory\ShopFactoryInterface: '@App\Service\OAuth\Factory\ShopFactory'
-    App\Service\OAuth\Persistence\ShopPersistenceServiceInterface: '@App\Service\OAuth\Persistence\ShopPersistenceService'
-    App\Service\OAuth\Factory\AuthenticatorFactoryInterface: '@App\Service\OAuth\Factory\AuthenticatorFactory'
+    App\Factory\ShopFactoryInterface: '@App\Factory\ShopFactory'
+    App\Factory\ApplicationFactoryInterface: '@App\Factory\ApplicationFactory'
+    App\Provider\ShopProvider: ~
+    App\OAuth\Factory\AuthenticatorFactoryInterface: '@App\OAuth\Factory\AuthenticatorFactory'
+    App\Service\Persistence\ShopPersistenceServiceInterface: '@App\Service\Persistence\ShopPersistenceService'
+    App\Service\Token\TokenManagerInterface: '@App\Service\Token\TokenManager'
     App\Service\OAuth\Authentication\AuthenticationServiceInterface: '@App\Service\OAuth\Authentication\AuthenticationService'
 
     # Registration of external services

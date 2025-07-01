@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Service\OAuth\Factory;
+namespace App\OAuth\Factory;
 
 use DreamCommerce\Component\ShopAppstore\Api\Authenticator\OAuthAuthenticator;
-use DreamCommerce\Component\ShopAppstore\Api\Authenticator\OAuthAuthenticatorInterface;
+use DreamCommerce\Component\ShopAppstore\Api\Authenticator\AuthenticatorInterface;
 use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
 
 class AuthenticatorFactory implements AuthenticatorFactoryInterface
@@ -18,7 +18,7 @@ class AuthenticatorFactory implements AuthenticatorFactoryInterface
     /**
      * Creates OAuthAuthenticator instance
      */
-    public function createAuthenticator(): OAuthAuthenticatorInterface
+    public function createAuthenticator(): AuthenticatorInterface
     {
         return new OAuthAuthenticator($this->shopClient);
     }
