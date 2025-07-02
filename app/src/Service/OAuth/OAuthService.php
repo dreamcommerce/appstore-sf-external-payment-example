@@ -56,8 +56,9 @@ class OAuthService
      */
     public function updateApplicationVersion(AppStoreLifecycleEvent $event): void
     {
-        $shop = $this->shopFactory->getOAuthShop(Shop::fromEvent($event));
-        $this->shopPersistenceService->updateApplicationVersion($shop, $event);
+        $shop = Shop::fromEvent($event);
+        $oAuthShop = $this->shopFactory->getOAuthShop($shop);
+        $this->shopPersistenceService->updateApplicationVersion($oAuthShop, $shop);
     }
 
     /**

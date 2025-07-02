@@ -25,8 +25,4 @@ interface ShopFactoryInterface
      * @return OAuthShop
      */
     public function getOAuthShop(Shop $shopData): OAuthShop;
-
-    /**
-     * @deprecated Use getOAuthShop(ShopData) instead
-     */
 }

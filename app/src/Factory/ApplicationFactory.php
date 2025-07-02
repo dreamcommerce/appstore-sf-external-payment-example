@@ -20,9 +20,6 @@ class ApplicationFactory implements ApplicationFactoryInterface
         $this->appStoreSecret = $appStoreSecret;
     }
 
-    /**
-     * Create a new Application instance with app credentials
-     */
     public function createApplication(): Application
     {
         return new Application(

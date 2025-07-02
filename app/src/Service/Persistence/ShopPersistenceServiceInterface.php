@@ -2,6 +2,7 @@
 
 namespace App\Service\Persistence;
 
+use App\Domain\Shop\Model\Shop;
 use App\Service\Event\AppStoreLifecycleEvent;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 
@@ -19,9 +20,10 @@ interface ShopPersistenceServiceInterface
     /**
      * Updates application version for existing shop installation
      *
-     * @param OAuthShop $shop Shop instance to update
-     * @param AppStoreLifecycleEvent $event Event containing shop data and version information
+     * @param OAuthShop $OAuthShop
+     * @param Shop      $shop Shop instance to update
+     *
      * @throws \RuntimeException on error
      */
-    public function updateApplicationVersion(OAuthShop $shop, AppStoreLifecycleEvent $event): void;
+    public function updateApplicationVersion(OAuthShop $OAuthShop, Shop $shop): void;
 }

@@ -1,14 +1,19 @@
 # Symfony App Store Integration
 
-A Symfony-based application for integrating with the Shoper platform using iframe authentication.
+Symfony application for integrating with the Shoper platform, enabling external payment handling and managing the application lifecycle in the Shoper AppStore.
 
-## Overview
+> **Based on**: https://github.com/dreamcommerce/appstore-sf-mvc-example
 
-This application provides integration with the Shoper AppStore, handling:
+## Purpose
 
-- App installation and uninstallation events
-- Secure iframe authentication
-- App interface rendering within the Shoper admin panel
+This application is designed to integrate external payments into Shoper stores. After installation, it allows creating new payments and managing payment settings via the Shoper admin panel.
+
+## Features
+
+- Handles installation and uninstallation events (AppStore Events)
+- Secure iframe authentication (hash, shopId, timestamp)
+- Creation and configuration of external payments for the store
+- User interface loaded in the Shoper admin panel (iframe)
 
 ## Architecture
 
@@ -19,73 +24,48 @@ https://developers.shoper.pl/developers/
 The application uses a custom authentication system for iframe integration:
 
 1. Shoper sends requests with shop ID, timestamp, and hash parameters
-2. `IframeAuthentication` authenticator validates the hash using `HashValidator`
-3. If valid, the user is authenticated with the shop ID
+2. `IframeAuthentication` verifies the hash using `HashValidator`
+3. Upon successful verification, the user is authenticated based on the shop ID
 
 ### AppStore Events
 
 The application handles lifecycle events:
 
-- **Install**: Stores authorization code for API access
-- **Uninstall**: Cleans up application data
+- **Install**: stores authorization code for API, creates a shop entry in the database, and initiates payment integration
+- **Uninstall**: removes application data related to the shop
+- **Other events**: can be extended with additional webhooks
 
 ### Routes
 
-- `/app-store/view/hello-world` - Main application interface loaded in Shoper iframe which displays a view for the merchant
-- `/app-store/event` - Endpoint for installation/uninstallation events (webhooks)
-
-## Security
-
-- SHA-512 HMAC hash verification with request parameters
-- Secure user session management
-- Access control for all application endpoints
+- `/app-store/view/hello-world` – main application interface loaded in the Shoper admin panel iframe
+- `/app-store/event` – endpoint for handling installation/uninstallation events (AppStore webhooks)
 
 
-- **IframeAuthentication**: A Symfony authenticator that:
-    - Validates incoming requests from Shoper iframes
-    - Extracts shop ID and hash parameters
-    - Verifies request authenticity using HMAC SHA-512
-    - Creates user authentication successful validation
+## Extending
 
-- **HashValidator**: Handles security verification by:
-    - Sorting parameters alphabetically by key
-    - Generating a SHA-512 HMAC hash using the app store secret
-    - Comparing the generated hash with the one provided in the request
+The codebase is ready for further extension with new event types, API integrations, and payment features.
 
-- **AppstoreUser**: Simple user implementation that:
-    - Stores the shop identifier
-    - Implements Symfony's UserInterface
-    - Provides minimal required user functionality
+## Requirements
 
-- **AppstoreUserProvider**: User management service that:
-    - Creates AppstoreUser instances based on shop identifiers
-    - Could be extended to load users from a persistence layer
-
-The application uses Symfony's security system with a custom authenticator chain:
-
-- Configured in `config/packages/security.yaml`
-- No standard login form - authentication happens via iframe parameters
-- All view endpoints are protected by default, requiring valid Shoper authentication
+- PHP 8.2+
+- Symfony 6+
+- Composer
 
 ## Installation
 
-### Prerequisites
-
-- PHP 8.4+
-- Composer
-- Docker and Docker Compose
-
-### Setup
-
 1. Clone the repository
-2. Install dependencies:
-   ```bash
-   cd app && composer install
-   ```
+2. Install dependencies: `bash cd app && composer install`
+3. Configure the database connection in the `.env` file
+4. Run migrations: `php bin/console doctrine:migrations:migrate`
+5. Configure the application in the Shoper AppTools and point application URLs to your local or production environment
 
-3. Copy `.env.example` and set required configuration:
+## Environment variables
+
+6. Copy `.env.example` and set other required configuration:
    ```
-   APP_STORE_SECRET=your_secret_key
+    APPSTORE_APP_SECRET=your_appstore_secret_key
+    APP_CLIENT=your_client_key
+    APP_SECRET=your_secret_key
    ```
 
 ### Docker Setup
@@ -100,7 +80,7 @@ The application will be available at http://localhost:8080
 
 ### Local development with admin panel
 
-If you want to see the view in your devshop then you have to expose your local machine to the internet using ngrok or cloudflare tunnel. 
+If you want to see the view in your devshop then you have to expose your local machine to the internet using ngrok or cloudflare tunnel.
 Example configuration for cloudflare tunnel and linux
 ```shell
   curl -L --output cloudflared.deb \
@@ -114,4 +94,3 @@ Example configuration for cloudflare tunnel and linux
  sudo cloudflared tunnel run --token <token>
 ```
 ---
-

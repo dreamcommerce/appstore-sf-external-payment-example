@@ -2,6 +2,7 @@
 
 namespace App\Service\Persistence;
 
+use App\Domain\Shop\Model\Shop;
 use App\Entity\ShopInstalled;
 use App\Repository\ShopInstalledRepository;
 use App\Service\Event\AppStoreLifecycleEvent;
@@ -64,24 +65,9 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
         }
     }
 
-    /**
-     * Updates application version for existing shop installation
-     *
-     * @param OAuthShop $shop Shop instance to update
-     * @param AppStoreLifecycleEvent $event Event containing shop data and version information
-     * @throws \RuntimeException on error
-     */
-    public function updateApplicationVersion(OAuthShop $shop, AppStoreLifecycleEvent $event): void
+    public function updateApplicationVersion(OAuthShop $OAuthShop, Shop $shop): void
     {
-        $shopId = $event->shopId ?? $shop->getId();
-
-        if (empty($shopId)) {
-            $this->logger->warning('Cannot update version: Shop ID is missing', [
-                'shop_url' => $event->shopUrl
-            ]);
-            throw new \RuntimeException('Cannot update version: Shop ID is missing');
-        }
-
+        $shopId = $shop->getShopId();
         $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopId]);
 
         if (!$shopInstalled) {
@@ -92,23 +78,22 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
         }
 
         try {
-            $shopInstalled->setApplicationVersion($event->version ?? $shop->getVersion() ?? 1);
-
-            if ($shop->getToken()) {
-                $shopInstalled->setTokens($this->tokenManager->prepareTokenResponse($shop));
+            $shopInstalled->setApplicationVersion($OAuthShop->getVersion() ?? $shop->getVersion() ?? 1);
+            if ($OAuthShop->getToken()) {
+                $shopInstalled->setTokens($this->tokenManager->prepareTokenResponse($OAuthShop));
             }
 
             $this->shopInstalledRepository->save($shopInstalled);
 
             $this->logger->info('Application version updated successfully', [
                 'shop_id' => $shopId,
-                'shop_url' => $event->shopUrl,
-                'version' => $event->version ?? $shop->getVersion() ?? 1
+                'shop_url' => $OAuthShop->getUri(),
+                'version' => $OAuthShop->getVersion() ?? $shop->getVersion() ?? 1
             ]);
         } catch (\Exception $e) {
             $this->logger->error('Error while updating application version', [
-                'shop_id' => $event->shopId,
-                'shop_url' => $event->shopUrl,
+                'shop_id' => $shop->getShopId(),
+                'shop_url' => $shop->getShopUrl(),
                 'error_message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

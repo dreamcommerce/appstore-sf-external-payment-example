@@ -15,9 +15,6 @@ class AuthenticatorFactory implements AuthenticatorFactoryInterface
         $this->shopClient = $shopClient;
     }
 
-    /**
-     * Creates OAuthAuthenticator instance
-     */
     public function createAuthenticator(): AuthenticatorInterface
     {
         return new OAuthAuthenticator($this->shopClient);
