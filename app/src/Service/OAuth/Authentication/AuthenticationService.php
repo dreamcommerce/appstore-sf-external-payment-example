@@ -59,12 +59,10 @@ class AuthenticationService implements AuthenticationServiceInterface
             $shopData = $this->prepareShopDataFromEvent($event);
             $shop = $this->shopFactory->getOAuthShop($shopData);
 
-            if ($shop->isAuthenticated()) {
-                $this->logger->info('Shop is already authenticated');
-                return;
+            if (!$shop->isAuthenticated()) {
+                $this->authenticate($shop);
             }
 
-            $this->authenticate($shop);
             $this->shopPersistenceService->saveShopInstalled($shop, $event->authCode);
         } catch (\Exception $e) {
             $this->logger->error('Authentication process error', [

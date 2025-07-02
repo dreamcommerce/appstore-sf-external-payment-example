@@ -54,7 +54,7 @@ class Shop
     public function toArray(): array
     {
         $data = [
-            'shop' => $this->shopId,
+            'id' => $this->shopId,
             'url' => $this->shopUrl
         ];
 
