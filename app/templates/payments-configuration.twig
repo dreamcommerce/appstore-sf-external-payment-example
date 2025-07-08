@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ustawienia płatności{% endblock %}
+
+{% block body %}
+    <h1 id="shop-header">Ustawienia płatności dla sklepu ...</h1>
+    <div id="payment-setting">
+        <button id="create-payment-btn" class="create-btn">Stwórz nową płatność</button>
+        <div class="payment-list">
+            {% for payment in paymentSettings %}
+                <div class="payment-item" data-id="{{ payment.payment_id }}" data-name="{{ payment.name }}" data-visible="{{ payment.visible }}" data-currencies="{{ payment.currencies }}">
+                    <div class="payment-info">
+                        <span class="payment-name">{{ payment.name }}</span>
+                        <span class="payment-visible">(widoczność: {{ payment.visible }})</span>
+                    </div>
+                    <div class="payment-actions">
+                        <button class="edit-btn">Edytuj</button>
+                        <button class="delete-btn">Usuń</button>
+                    </div>
+                </div>
+            {% else %}
+                <div style="color:#888; padding: 24px; text-align:center;">Brak skonfigurowanych płatności.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modal do edycji płatności -->
+    <div id="edit-payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edytuj płatność</h2>
+            <form id="edit-payment-form">
+                <input type="hidden" id="edit-payment-id" name="payment_id">
+
+                <div class="form-group">
+                    <label for="edit-payment-name">Nazwa płatności</label>
+                    <input type="text" id="edit-payment-name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-payment-visible">Widoczność</label>
+                    <select id="edit-payment-visible" name="visible">
+                        <option value="1">Widoczna</option>
+                        <option value="0">Ukryta</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="save-btn">Zapisz zmiany</button>
+                    <button type="button" class="cancel-btn">Anuluj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal do tworzenia nowej płatności -->
+    <div id="create-payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-create">&times;</span>
+            <h2>Stwórz nową płatność</h2>
+            <form id="create-payment-form">
+                <div class="form-group">
+                    <label for="create-payment-name">Identyfikator płatności</label>
+                    <input type="text" id="create-payment-name" name="name" value="external" readonly class="readonly-field">
+                    <small class="form-hint">Identyfikator jest stały i wymagany przez API</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="create-payment-title">Tytuł płatności</label>
+                    <input type="text" id="create-payment-title" name="title" required placeholder="np. Płatność Zewnętrzna">
+                </div>
+
+                <div class="form-group">
+                    <label for="create-payment-description">Opis płatności</label>
+                    <textarea id="create-payment-description" name="description" rows="3" placeholder="Opis widoczny dla klientów"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="create-payment-visible">Widoczność</label>
+                    <select id="create-payment-visible" name="visible">
+                        <option value="1">Widoczna</option>
+                        <option value="0">Ukryta</option>
+                    </select>
+                </div>
+
+                <input type="hidden" id="create-payment-locale" name="locale" value="pl_PL">
+
+                <div class="form-group">
+                    <button type="submit" class="save-btn">Utwórz płatność</button>
+                    <button type="button" class="cancel-create-btn">Anuluj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
