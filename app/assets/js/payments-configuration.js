@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     var shopUrl = window.location !== window.parent.location ? document.referrer : window.location.href;
-    document.getElementById('shop-header').textContent = 'Ustawienia płatności dla sklepu ' + shopUrl;
+    document.getElementById('shop-header').textContent = 'Payment settings for the store ' + shopUrl;
 
     function getUrlParam(name) {
         var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 return JSON.parse(text);
             } catch (e) {
-                throw new Error('Nieprawidłowa odpowiedź z serwera: ' + text);
+                throw new Error('Invalid response from server: ' + text);
             }
         });
     }
@@ -65,13 +65,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('create-payment-modal').style.display = 'none';
                     window.location.reload();
 
-                    alert('Płatność została utworzona.');
+                    alert('Payment has been created.');
                 } else {
-                    alert('Błąd podczas tworzenia płatności: ' + (data.error || 'Nieznany błąd'));
+                    alert('Error while creating payment: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(function(error) {
-                alert(error.message || 'Wystąpił błąd podczas komunikacji z serwerem.');
+                alert(error.message || 'An error occurred while communicating with the server.');
             });
 
     });
@@ -79,17 +79,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.delete-btn').forEach(function(button) {
         button.addEventListener('click', function(e) {
             e.preventDefault();
-            if (!confirm('Czy na pewno chcesz usunąć tę płatność?')) {
+            if (!confirm('Are you sure you want to delete this payment?')) {
                 return;
             }
 
             var paymentItem = this.closest('.payment-item');
             var paymentId = paymentItem.dataset.id;
-
-            console.log('Usuwanie płatności:', {
-                shopCode: shopCode,
-                paymentId: paymentId
-            });
 
             var urlParams = window.location.search;
             fetch('/app-store/view/payments-configuration/delete' + urlParams, {
@@ -106,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         paymentItem.remove();
                         if (document.querySelectorAll('.payment-item').length === 0) {
                             document.querySelector('.payment-list').innerHTML =
-                                '<div style="color:#888; padding: 24px; text-align:center;">Brak skonfigurowanych płatności.</div>';
+                                '<div style="color:#888; padding: 24px; text-align:center;">No configured payments.</div>';
                         }
                     } else {
                         alert('Error when removing payments: ' + (data.error || 'Unknown error'));
@@ -167,22 +162,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     var paymentItem = document.querySelector('.payment-item[data-id="' + paymentId + '"]');
                     paymentItem.querySelector('.payment-name').textContent = name;
-                    paymentItem.querySelector('.payment-visible').textContent = '(widoczność: ' + (visible == '1' ? 'visible' : 'hidden') + ')';
+                    paymentItem.querySelector('.payment-visible').textContent = '(visibility: ' + (visible == '1' ? 'visible' : 'hidden') + ')';
 
-                    // Aktualizacja atrybutów danych
                     paymentItem.dataset.name = name;
                     paymentItem.dataset.visible = visible == '1' ? 'visible' : 'hidden';
                     paymentItem.dataset.active = active == '1' ? 'active' : 'inactive';
 
                     document.getElementById('edit-payment-modal').style.display = 'none';
 
-                    alert('Płatność została zaktualizowana.');
+                    alert('Payment has been updated.');
                 } else {
-                    alert('Błąd podczas aktualizacji płatności: ' + (data.error || 'Nieznany błąd'));
+                    alert('Error while updating payment: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(function(error) {
-                alert(error.message || 'Wystąpił błąd podczas komunikacji z serwerem.');
+                alert(error.message || 'An error occurred while communicating with the server.');
             });
     });
 });

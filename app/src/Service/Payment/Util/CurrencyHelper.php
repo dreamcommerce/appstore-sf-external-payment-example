@@ -16,15 +16,6 @@ class CurrencyHelper
         $this->logger = $logger;
     }
 
-    /**
-     * Pobiera szczegóły walut na podstawie tablicy ID.
-     *
-     * @param ShopClient $shopClient
-     * @param OAuthShop $oauthShop
-     * @param array $currencyIds
-     *
-     * @return array
-     */
     public function getCurrenciesDetails(ShopClient $shopClient, OAuthShop $oauthShop, array $currencyIds): array
     {
         if (empty($currencyIds)) {
@@ -38,7 +29,7 @@ class CurrencyHelper
                 $currency = $currencyResource->find($oauthShop, $currencyId);
                 $currencies[] = $currency->getData();
             } catch (\Throwable $e) {
-                $this->logger->warning('Nie udało się pobrać waluty', [
+                $this->logger->warning('Failed to fetch currency details', [
                     'currency_id' => $currencyId,
                     'exception' => $e->getMessage()
                 ]);

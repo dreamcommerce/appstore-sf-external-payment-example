@@ -23,7 +23,8 @@ class UpdatePaymentHandler
     {
         $this->logger->info('Handling UpdatePaymentMessage', [
             'shop_code' => $message->getShopCode(),
-            'payment_id' => $message->getPaymentId()
+            'payment_id' => $message->getPaymentId(),
+            'data' => $message->getData()
         ]);
         
         return $this->paymentService->updatePayment(
