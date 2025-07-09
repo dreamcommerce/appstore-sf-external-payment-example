@@ -5,20 +5,6 @@
 {% block body %}
 <div class="payment-details-container">
     <h1 class="payment-details-title">Szczegóły płatności</h1>
-    <div class="payment-info">
-        <div>
-            <span class="payment-info-label">ID płatności:</span>
-            <span>{{ paymentId }}</span>
-        </div>
-        <div>
-            <span class="payment-info-label">Sklep:</span>
-            <span>{{ shopCode }}</span>
-        </div>
-        <div>
-            <span class="payment-info-label">Język:</span>
-            <span>{{ locale }}</span>
-        </div>
-    </div>
     <div class="payment-data">
         {% if payment %}
             <div class="payment-data-box">
@@ -36,8 +22,21 @@
                         <ul>
                             {% for currency in payment.currencies %}
                                 <li>
-                                    {{ currency.code ?? '-' }}
-                                    {% if currency.name is defined %} ({{ currency.name }}){% endif %}
+                                    {% if currency.name is defined %} {{ currency.name }}{% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span>Brak</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <span class="payment-info-label">Waluty obsługiwane:</span>
+                    {% if payment.supportedCurrencies is iterable and payment.supportedCurrencies|length > 0 %}
+                        <ul>
+                            {% for currency in payment.supportedCurrencies %}
+                                <li>
+                                    {% if currency.name is defined %} {{ currency.name }}{% endif %}
                                 </li>
                             {% endfor %}
                         </ul>
@@ -56,6 +55,11 @@
                         <span>{{ translation.description }}</span>
                     </div>
                 {% endif %}
+
+                <div>
+                    <span class="payment-info-label">Kanały platności:</span>
+{#                    <span>{{ channels }}</span>#}
+                </div>
             </div>
         {% else %}
             <div class="payment-data-empty">Brak danych o płatności.</div>

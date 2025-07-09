@@ -5,9 +5,17 @@ namespace App\Service\Payment\Util;
 use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\CurrencyResource;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
+use Psr\Log\LoggerInterface;
 
 class CurrencyHelper
 {
+    private LoggerInterface $logger;
+
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     /**
      * Pobiera szczegóły walut na podstawie tablicy ID.
      *
@@ -27,10 +35,13 @@ class CurrencyHelper
         $currencies = [];
         foreach ($currencyIds as $currencyId) {
             try {
-                $currency = $currencyResource->find($oauthShop, (int)$currencyId);
+                $currency = $currencyResource->find($oauthShop, $currencyId);
                 $currencies[] = $currency->getData();
             } catch (\Throwable $e) {
-                // Pomijamy błędne ID walut
+                $this->logger->warning('Nie udało się pobrać waluty', [
+                    'currency_id' => $currencyId,
+                    'exception' => $e->getMessage()
+                ]);
             }
         }
         return $currencies;

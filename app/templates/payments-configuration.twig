@@ -6,21 +6,24 @@
     <h1 id="shop-header">Ustawienia płatności dla sklepu ...</h1>
     <div id="payment-setting">
         <button id="create-payment-btn" class="create-btn">Stwórz nową płatność</button>
-        <div class="payment-list">
-            {% for payment in paymentSettings %}
-                <div class="payment-item" data-id="{{ payment.payment_id }}" data-name="{{ payment.name }}" data-visible="{{ payment.visible }}" data-currencies="{{ payment.currencies }}">
-                    <div class="payment-info">
-                        <span class="payment-name">{{ payment.name }}</span>
-                        <span class="payment-visible">(widoczność: {{ payment.visible }})</span>
+        <div class="payment-list-frame">
+            <div class="payment-list">
+                {% for payment in paymentSettings %}
+                    <div class="payment-item" data-id="{{ payment.payment_id }}" data-name="{{ payment.name }}" data-visible="{{ payment.visible }}" data-active="{{ payment.active|default('inactive') }}" data-currencies="{{ payment.currencies }}">
+                        <div class="payment-info">
+                            <span class="payment-name">{{ payment.name }}</span>
+                            <span class="payment-visible">(widoczność: {{ payment.visible }})</span>
+                            <span class="payment-active">(aktywność: {{ payment.active|default('inactive') }})</span>
+                        </div>
+                        <div class="payment-actions">
+                            <button class="edit-btn">Edytuj</button>
+                            <button class="delete-btn">Usuń</button>
+                        </div>
                     </div>
-                    <div class="payment-actions">
-                        <button class="edit-btn">Edytuj</button>
-                        <button class="delete-btn">Usuń</button>
-                    </div>
-                </div>
-            {% else %}
-                <div style="color:#888; padding: 24px; text-align:center;">Brak skonfigurowanych płatności.</div>
-            {% endfor %}
+                {% else %}
+                    <div style="color:#888; padding: 24px; text-align:center;">Brak skonfigurowanych płatności.</div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
@@ -35,6 +38,14 @@
                 <div class="form-group">
                     <label for="edit-payment-name">Nazwa płatności</label>
                     <input type="text" id="edit-payment-name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-payment-active">Aktywność</label>
+                    <select id="edit-payment-active" name="active">
+                        <option value="1">Aktywna</option>
+                        <option value="0">Nieaktywna</option>
+                    </select>
                 </div>
 
                 <div class="form-group">

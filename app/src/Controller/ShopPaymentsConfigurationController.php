@@ -86,8 +86,8 @@ class ShopPaymentsConfigurationController extends AbstractController
     {
         $shopCode = $request->query->get('shop');
         $paymentId = $request->request->get('payment_id');
-        $name = $request->request->get('name');
         $visible = $request->request->get('visible');
+        $active = $request->request->get('active');
 
         if (!$shopCode || !$paymentId) {
             return $this->json(['success' => false, 'error' => 'Missing required data'], 400);
@@ -100,6 +100,10 @@ class ShopPaymentsConfigurationController extends AbstractController
 
         if ($visible !== null) {
             $data['visible'] = $visible;
+        }
+
+        if ($active !== null) {
+            $data['active'] = $active;
         }
 
         try {
