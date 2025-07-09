@@ -212,3 +212,77 @@
   padding: 24px;
   text-align: center;
 }
+.payment-list-frame.modern {
+    background: #f8fafc;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    padding: 32px 24px;
+    margin: 32px auto;
+    max-width: 700px;
+}
+
+.payment-item.modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    margin-bottom: 18px;
+    padding: 18px 24px;
+    transition: box-shadow 0.2s;
+    border: 1px solid #e5e7eb;
+}
+.payment-item.modern:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    border-color: #cbd5e1;
+}
+
+.payment-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.payment-name {
+    font-weight: 600;
+    font-size: 1.1em;
+    color: #22223b;
+}
+.payment-visible, .payment-active {
+    font-size: 0.95em;
+    color: #4b5563;
+}
+
+.payment-actions {
+    display: flex;
+    gap: 12px;
+}
+.edit-btn.modern, .delete-btn.modern {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 500;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.edit-btn.modern {
+    background: #2563eb;
+    color: #fff;
+}
+.edit-btn.modern:hover {
+    background: #1d4ed8;
+}
+.delete-btn.modern {
+    background: #f87171;
+    color: #fff;
+}
+.delete-btn.modern:hover {
+    background: #dc2626;
+}
+.payment-empty.modern {
+    color: #888;
+    padding: 32px;
+    text-align: center;
+    font-size: 1.1em;
+}

@@ -88,6 +88,7 @@ class ShopPaymentsConfigurationController extends AbstractController
         $paymentId = $request->request->get('payment_id');
         $visible = $request->request->get('visible');
         $active = $request->request->get('active');
+        $locale = $request->query->get('translations', 'pl_PL');
 
         if (!$shopCode || !$paymentId) {
             return $this->json(['success' => false, 'error' => 'Missing required data'], 400);
@@ -103,7 +104,10 @@ class ShopPaymentsConfigurationController extends AbstractController
         }
 
         if ($active !== null) {
-            $data['active'] = $active;
+            $data['translations'][$locale] = [
+                'active' => $active,
+                'title' => $request->request->get('name'),
+            ];
         }
 
         try {
@@ -115,13 +119,8 @@ class ShopPaymentsConfigurationController extends AbstractController
             if ($success) {
                 return $this->json(['success' => true]);
             }
-        } catch (\Exception $e) {
-            $this->logger->error('Controller error during payment update', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString()
-            ]);
+        } catch (\Throwable $e) {
+            return $this->json(['success' => false, 'error' => 'An error occurred while editing the payment'], 500);
         }
 
         return $this->json(['success' => false, 'error' => 'Error while updating payment'], 500);
