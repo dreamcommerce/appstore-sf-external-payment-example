@@ -164,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     paymentItem.querySelector('.payment-name').textContent = name;
                     paymentItem.querySelector('.payment-visible').textContent = '(visibility: ' + (visible == '1' ? 'visible' : 'hidden') + ')';
 
-                    // Aktualizacja atrybutów danych
                     paymentItem.dataset.name = name;
                     paymentItem.dataset.visible = visible == '1' ? 'visible' : 'hidden';
                     paymentItem.dataset.active = active == '1' ? 'active' : 'inactive';
