@@ -124,10 +124,12 @@ document.addEventListener('DOMContentLoaded', function() {
             var paymentId = paymentItem.dataset.id;
             var paymentName = paymentItem.dataset.name;
             var paymentVisible = paymentItem.dataset.visible === 'visible' ? '1' : '0';
+            var paymentActive = paymentItem.dataset.active === 'active' ? '1' : '0';
 
             document.getElementById('edit-payment-id').value = paymentId;
             document.getElementById('edit-payment-name').value = paymentName;
             document.getElementById('edit-payment-visible').value = paymentVisible;
+            document.getElementById('edit-payment-active').value = paymentActive;
             document.getElementById('edit-payment-modal').style.display = 'block';
         });
     });
@@ -146,6 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var paymentId = document.getElementById('edit-payment-id').value;
         var name = document.getElementById('edit-payment-name').value;
         var visible = document.getElementById('edit-payment-visible').value;
+        var active = document.getElementById('edit-payment-active').value;
 
         var urlParams = window.location.search;
         fetch('/app-store/view/payments-configuration/edit' + urlParams, {
@@ -156,7 +159,8 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: 'payment_id=' + encodeURIComponent(paymentId) +
                 '&name=' + encodeURIComponent(name) +
-                '&visible=' + encodeURIComponent(visible)
+                '&visible=' + encodeURIComponent(visible) +
+                '&active=' + encodeURIComponent(active)
         })
             .then(safeJson)
             .then(function(data) {
@@ -165,8 +169,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     paymentItem.querySelector('.payment-name').textContent = name;
                     paymentItem.querySelector('.payment-visible').textContent = '(widoczność: ' + (visible == '1' ? 'visible' : 'hidden') + ')';
 
+                    // Aktualizacja atrybutów danych
                     paymentItem.dataset.name = name;
                     paymentItem.dataset.visible = visible == '1' ? 'visible' : 'hidden';
+                    paymentItem.dataset.active = active == '1' ? 'active' : 'inactive';
 
                     document.getElementById('edit-payment-modal').style.display = 'none';
 

@@ -7,6 +7,8 @@ use App\Repository\ShopInstalledRepository;
 use App\Service\OAuth\OAuthService;
 use App\Service\Payment\Util\CurrencyHelper;
 use DreamCommerce\Component\ShopAppstore\Api\Exception\ApiException;
+use DreamCommerce\Component\ShopAppstore\Api\Exception\CommunicationException;
+use DreamCommerce\Component\ShopAppstore\Api\Resource\CurrencyResource;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\PaymentResource;
 use Psr\Log\LoggerInterface;
 
@@ -79,7 +81,7 @@ class PaymentService implements PaymentServiceInterface
         }
     }
 
-    public function updatePayment(string $shopCode, string $paymentId, array $data): bool
+    public function updatePayment(string $shopCode, int $paymentId, array $data): bool
     {
         if (!$shopCode || !$paymentId) {
             return false;
@@ -96,7 +98,7 @@ class PaymentService implements PaymentServiceInterface
             
             $shopClient = $this->oauthService->getShopClient();
             $paymentResource = new PaymentResource($shopClient);
-            $paymentResource->update($oauthShop, (int)$paymentId, $data);
+            $paymentResource->update($oauthShop, $paymentId, $data);
 
             $this->logger->info('Payment updated successfully', [
                 'shop_code' => $shopCode,
@@ -118,7 +120,7 @@ class PaymentService implements PaymentServiceInterface
         }
     }
 
-    public function deletePayment(string $shopCode, string $paymentId): bool
+    public function deletePayment(string $shopCode, int $paymentId): bool
     {
         if (!$shopCode || !$paymentId) {
             return false;
@@ -135,7 +137,7 @@ class PaymentService implements PaymentServiceInterface
             
             $shopClient = $this->oauthService->getShopClient();
             $paymentResource = new PaymentResource($shopClient);
-            $paymentResource->delete($oauthShop, (int)$paymentId);
+            $paymentResource->delete($oauthShop, $paymentId);
 
             $this->logger->info('Payment deleted successfully', [
                 'shop_code' => $shopCode,
@@ -185,6 +187,7 @@ class PaymentService implements PaymentServiceInterface
             foreach ($itemList as $payment) {
                 $paymentData = $payment->getData();
                 $visible = isset($paymentData['visible']) ? ($paymentData['visible'] ? 'visible' : 'hidden') : 'hidden';
+                $active = isset($paymentData['active']) ? ($paymentData['active'] ? 'active' : 'inactive') : 'inactive';
                 $currencies = isset($paymentData['currencies']) ? json_encode($paymentData['currencies']) : '[]';
                 if ($this->hasTranslationForLocale($paymentData, $locale)) {
                     $translationName = $paymentData['translations'][$locale]['title'];
@@ -192,6 +195,7 @@ class PaymentService implements PaymentServiceInterface
                         'payment_id' => $paymentData['payment_id'],
                         'name' => $translationName,
                         'visible' => $visible,
+                        'active' => $active,
                         'currencies' => $currencies,
                     ];
                 }
@@ -214,26 +218,27 @@ class PaymentService implements PaymentServiceInterface
         }
     }
 
-    public function getPaymentById(string $shopCode, string $paymentId, string $locale): array
+    public function getPaymentById(string $shopCode, int $paymentId, string $locale): array
     {
         $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
         if (!$shopInstalled) {
             $this->logger->error('Shop not found when fetching payment', ['shop_code' => $shopCode]);
             return [];
         }
+
         try {
             $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
             $oauthShop = $this->oauthService->getShop($shopModel);
             $shopClient = $this->oauthService->getShopClient();
             $paymentResource = new PaymentResource($shopClient);
-            $payment = $paymentResource->find($oauthShop, (int)$paymentId);
+            $payment = $paymentResource->find($oauthShop, $paymentId);
             $data = $payment->getData();
-
             if (isset($data['currencies']) && is_array($data['currencies'])) {
                 $data['currencies'] = $this->currencyHelper->getCurrenciesDetails($shopClient, $oauthShop, $data['currencies']);
             } else {
                 $data['currencies'] = [];
             }
+            $data['supportedCurrencies'] = isset($data['supportedCurrencies']) ? $data['supportedCurrencies'] : [];
 
             return $data;
         } catch (\Throwable $e) {

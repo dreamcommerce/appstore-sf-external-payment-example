@@ -17,12 +17,12 @@ interface PaymentServiceInterface
     /**
      * Aktualizuje istniejącą płatność
      */
-    public function updatePayment(string $shopCode, string $paymentId, array $data): bool;
+    public function updatePayment(string $shopCode, int $paymentId, array $data): bool;
 
     /**
      * Usuwa płatność
      */
-    public function deletePayment(string $shopCode, string $paymentId): bool;
+    public function deletePayment(string $shopCode, int $paymentId): bool;
 
     /**
      * Pobiera ustawienia płatności dla sklepu
@@ -32,5 +32,5 @@ interface PaymentServiceInterface
     /**
      * Pobiera szczegóły płatności po ID
      */
-    public function getPaymentById(string $shopCode, string $paymentId, string $locale): ?array;
+    public function getPaymentById(string $shopCode, int $paymentId, string $locale): ?array;
 }
