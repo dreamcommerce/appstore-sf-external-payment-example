@@ -1,23 +1,23 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Szczegóły płatności{% endblock %}
+{% block title %}Payment Details{% endblock %}
 
 {% block body %}
 <div class="payment-details-container">
-    <h1 class="payment-details-title">Szczegóły płatności</h1>
+    <h1 class="payment-details-title">Payment Details</h1>
     <div class="payment-data">
         {% if payment %}
             <div class="payment-data-box">
                 <div>
-                    <span class="payment-info-label">Nazwa techniczna:</span>
+                    <span class="payment-info-label">Technical Name:</span>
                     <span>{{ payment.name }}</span>
                 </div>
                 <div>
-                    <span class="payment-info-label">Widoczność:</span>
-                    <span>{{ payment.visible == '1' ? 'Widoczna' : 'Ukryta' }}</span>
+                    <span class="payment-info-label">Visibility:</span>
+                    <span>{{ payment.visible == '1' ? 'Visible' : 'Hidden' }}</span>
                 </div>
                 <div>
-                    <span class="payment-info-label">Waluty:</span>
+                    <span class="payment-info-label">Currencies:</span>
                     {% if payment.currencies is iterable and payment.currencies|length > 0 %}
                         <ul>
                             {% for currency in payment.currencies %}
@@ -27,11 +27,11 @@
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <span>Brak</span>
+                        <span>None</span>
                     {% endif %}
                 </div>
                 <div>
-                    <span class="payment-info-label">Waluty obsługiwane:</span>
+                    <span class="payment-info-label">Supported Currencies:</span>
                     {% if payment.supportedCurrencies is iterable and payment.supportedCurrencies|length > 0 %}
                         <ul>
                             {% for currency in payment.supportedCurrencies %}
@@ -41,34 +41,33 @@
                             {% endfor %}
                         </ul>
                     {% else %}
-                        <span>Brak</span>
+                        <span>None</span>
                     {% endif %}
                 </div>
                 {% set translation = payment.translations[locale] ?? null %}
                 {% if translation %}
                     <div>
-                        <span class="payment-info-label">Tytuł:</span>
+                        <span class="payment-info-label">Title:</span>
                         <span>{{ translation.title }}</span>
                     </div>
                     <div>
-                        <span class="payment-info-label">Opis:</span>
+                        <span class="payment-info-label">Description:</span>
                         <span>{{ translation.description }}</span>
                     </div>
                 {% endif %}
 
                 <div>
-                    <span class="payment-info-label">Kanały platności:</span>
-{#                    <span>{{ channels }}</span>#}
+                    <span class="payment-info-label">Payment Channels:</span>
                 </div>
             </div>
         {% else %}
-            <div class="payment-data-empty">Brak danych o płatności.</div>
+            <div class="payment-data-empty">No payment data available.</div>
         {% endif %}
     </div>
     <div class="payment-actions-panel">
-        <button type="button" class="action-btn action-edit">Edytuj</button>
-        <button type="button" class="action-btn action-notify">Wyślij powiadomienie</button>
-        <button type="button" class="action-btn action-delete">Usuń</button>
+        <button type="button" class="action-btn action-edit">Edit</button>
+        <button type="button" class="action-btn action-notify">Send Notification</button>
+        <button type="button" class="action-btn action-delete">Delete</button>
     </div>
 </div>
 {% endblock %}

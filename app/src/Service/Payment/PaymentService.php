@@ -6,39 +6,64 @@ use App\Domain\Shop\Model\Shop;
 use App\Repository\ShopInstalledRepository;
 use App\Service\OAuth\OAuthService;
 use App\Service\Payment\Util\CurrencyHelper;
-use DreamCommerce\Component\ShopAppstore\Api\Exception\ApiException;
-use DreamCommerce\Component\ShopAppstore\Api\Exception\CommunicationException;
-use DreamCommerce\Component\ShopAppstore\Api\Resource\CurrencyResource;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\PaymentResource;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Service responsible for handling payment operations
+ */
 class PaymentService implements PaymentServiceInterface
 {
     private LoggerInterface $logger;
     private OAuthService $oauthService;
     private ShopInstalledRepository $shopInstalledRepository;
     private CurrencyHelper $currencyHelper;
+    private PaymentMapper $paymentMapper;
 
     public function __construct(
         LoggerInterface $logger,
         OAuthService $oauthService,
         ShopInstalledRepository $shopInstalledRepository,
-        CurrencyHelper $currencyHelper
+        CurrencyHelper $currencyHelper,
+        PaymentMapper $paymentMapper
     ) {
         $this->logger = $logger;
         $this->oauthService = $oauthService;
         $this->shopInstalledRepository = $shopInstalledRepository;
         $this->currencyHelper = $currencyHelper;
+        $this->paymentMapper = $paymentMapper;
+    }
+
+    private function getShopAndClient(string $shopCode): ?array
+    {
+        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
+        if (!$shopInstalled) {
+            $this->logger->error('Shop not found', ['shop_code' => $shopCode]);
+            return null;
+        }
+
+        $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
+        $oauthShop = $this->oauthService->getShop($shopModel);
+        $shopClient = $this->oauthService->getShopClient();
+
+        return ['oauthShop' => $oauthShop, 'shopClient' => $shopClient];
+    }
+
+    private function handleApiException(\Throwable $e, string $action, array $context = []): void
+    {
+        $this->logger->error("Error during {$action}", array_merge($context, [
+            'error_message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]));
     }
 
     public function createPayment(string $shopCode, string $name, string $title, string $description, bool $visible, array $currencies, string $locale): bool
     {
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
-        if (!$shopInstalled) {
-            $this->logger->error('Shop not found when creating payment', ['shop_code' => $shopCode]);
+        $shopData = $this->getShopAndClient($shopCode);
+        if (!$shopData) {
             return false;
         }
-        
+
         $paymentData = [
             'currencies' => $currencies,
             'name' => $name,
@@ -46,7 +71,7 @@ class PaymentService implements PaymentServiceInterface
             'translations' => [
                 $locale => [
                     'title' => $title,
-                    'lang_id' => 1, // Zakładamy, że pl_PL ma ID 1
+                    'lang_id' => 1, // Zakładamy, że pl_PL ma ID 1 -> TODO dorobić pobieranie default LangID
                     'active' => 1,
                     'description' => $description,
                 ],
@@ -54,105 +79,65 @@ class PaymentService implements PaymentServiceInterface
         ];
 
         try {
-            $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
-            $oauthShop = $this->oauthService->getShop($shopModel);
-            
-            $shopClient = $this->oauthService->getShopClient();
-            $paymentResource = new PaymentResource($shopClient);
-            $result = $paymentResource->insert($oauthShop, $paymentData);
-            
+            $paymentResource = new PaymentResource($shopData['shopClient']);
+            $result = $paymentResource->insert($shopData['oauthShop'], $paymentData);
+
             $this->logger->info('Payment created successfully', [
                 'shop_code' => $shopCode,
                 'payment_data' => $paymentData,
                 'payment_id' => $result->getExternalId(),
             ]);
-            
+
             return true;
-        } catch (ApiException $e) {
-            $this->logger->error('Error creating payment', [
-                'shop_code' => $shopCode,
-                'error_message' => $e->getMessage(),
-                'error_code' => $e->getCode(),
-                'request_data' => $paymentData,
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+        } catch (\Throwable $e) {
+            $this->handleApiException($e, 'creating payment', ['shop_code' => $shopCode]);
             return false;
         }
     }
 
     public function updatePayment(string $shopCode, int $paymentId, array $data): bool
     {
-        if (!$shopCode || !$paymentId) {
-            return false;
-        }
-        
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
-        if (!$shopInstalled) {
+        $shopData = $this->getShopAndClient($shopCode);
+        if (!$shopData) {
             return false;
         }
 
         try {
-            $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
-            $oauthShop = $this->oauthService->getShop($shopModel);
-            
-            $shopClient = $this->oauthService->getShopClient();
-            $paymentResource = new PaymentResource($shopClient);
-            $paymentResource->update($oauthShop, $paymentId, $data);
+            $paymentResource = new PaymentResource($shopData['shopClient']);
+            $paymentResource->update($shopData['oauthShop'], $paymentId, $data);
 
             $this->logger->info('Payment updated successfully', [
                 'shop_code' => $shopCode,
                 'payment_id' => $paymentId,
                 'update_data' => $data,
             ]);
-            
+
             return true;
         } catch (\Throwable $e) {
-            $this->logger->error('Error updating payment', [
-                'shop_code' => $shopCode,
-                'payment_id' => $paymentId,
-                'update_data' => $data,
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            $this->handleApiException($e, 'updating payment', ['shop_code' => $shopCode, 'payment_id' => $paymentId]);
             return false;
         }
     }
 
     public function deletePayment(string $shopCode, int $paymentId): bool
     {
-        if (!$shopCode || !$paymentId) {
-            return false;
-        }
-        
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
-        if (!$shopInstalled) {
+        $shopData = $this->getShopAndClient($shopCode);
+        if (!$shopData) {
             return false;
         }
 
         try {
-            $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
-            $oauthShop = $this->oauthService->getShop($shopModel);
-            
-            $shopClient = $this->oauthService->getShopClient();
-            $paymentResource = new PaymentResource($shopClient);
-            $paymentResource->delete($oauthShop, $paymentId);
+            $paymentResource = new PaymentResource($shopData['shopClient']);
+            $paymentResource->delete($shopData['oauthShop'], $paymentId);
 
             $this->logger->info('Payment deleted successfully', [
                 'shop_code' => $shopCode,
                 'payment_id' => $paymentId
             ]);
-            
+
             return true;
         } catch (\Throwable $e) {
-            $this->logger->error('Error deleting payment', [
-                'shop_code' => $shopCode,
-                'payment_id' => $paymentId,
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            $this->handleApiException($e, 'deleting payment', ['shop_code' => $shopCode, 'payment_id' => $paymentId]);
             return false;
         }
     }
@@ -186,18 +171,8 @@ class PaymentService implements PaymentServiceInterface
 
             foreach ($itemList as $payment) {
                 $paymentData = $payment->getData();
-                $visible = isset($paymentData['visible']) ? ($paymentData['visible'] ? 'visible' : 'hidden') : 'hidden';
-                $active = isset($paymentData['active']) ? ($paymentData['active'] ? 'active' : 'inactive') : 'inactive';
-                $currencies = isset($paymentData['currencies']) ? json_encode($paymentData['currencies']) : '[]';
                 if ($this->hasTranslationForLocale($paymentData, $locale)) {
-                    $translationName = $paymentData['translations'][$locale]['title'];
-                    $payments[] = [
-                        'payment_id' => $paymentData['payment_id'],
-                        'name' => $translationName,
-                        'visible' => $visible,
-                        'active' => $active,
-                        'currencies' => $currencies,
-                    ];
+                    $payments[] = $this->paymentMapper->mapFromApi($paymentData, $locale);
                 }
             }
 
