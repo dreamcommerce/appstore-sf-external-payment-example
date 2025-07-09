@@ -21,7 +21,7 @@ class PaymentDetailsController extends AbstractController
     }
 
     #[Route('/app-store/view/payment-details/{paymentId}', name: 'payment_details', methods: ['GET'])]
-    public function paymentDetailsAction(Request $request, $paymentId): Response
+    public function paymentDetailsAction(Request $request): Response
     {
         $shopCode = $request->query->get('shop');
         $paymentId = $request->query->get('payment', 61);
@@ -32,8 +32,6 @@ class PaymentDetailsController extends AbstractController
         }
         return $this->render('payment-details.twig', [
             'payment' => $payment,
-            'paymentId' => $paymentId,
-            'shopCode' => $shopCode,
             'locale' => $locale
         ]);
     }
