@@ -8,11 +8,11 @@ class Shop
 {
     private string $shopId;
     private string $shopUrl;
-    private ?string $version;
+    private string $version;
     private ?string $authCode;
 
     public function __construct(
-        string $shopId, string $shopUrl, ?string $version = null, ?string $authCode = null
+        string $shopId, string $shopUrl, string $version, ?string $authCode = null
     )
     {
         $this->shopId = $shopId;
@@ -55,12 +55,9 @@ class Shop
     {
         $data = [
             'id' => $this->shopId,
-            'url' => $this->shopUrl
+            'url' => $this->shopUrl,
+            'version' => $this->version
         ];
-
-        if ($this->version !== null) {
-            $data['version'] = $this->version;
-        }
 
         if ($this->authCode !== null) {
             $data['auth_code'] = $this->authCode;

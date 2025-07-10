@@ -2,23 +2,6 @@ services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-        bind:
-            $appClientId: '%env(APP_CLIENT)%'
-            $appSecret: '%env(APP_SECRET)%'
-            $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
-            Psr\Log\LoggerInterface $logger: '@monolog.logger.app'
-
-    monolog.logger.app:
-        class: Monolog\Logger
-        arguments: ['app']
-        calls:
-            - [pushHandler, ['@app_logs']]
-
-    app_logs:
-        class: Monolog\Handler\StreamHandler
-        arguments: ['%kernel.logs_dir%/dev.log', 'debug']
-        tags:
-            - { name: monolog.logger, channel: app }
 
     App\:
         resource: '../src/'
@@ -27,15 +10,32 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Factory\ShopFactoryInterface: '@App\Factory\ShopFactory'
-    App\Factory\ApplicationFactoryInterface: '@App\Factory\ApplicationFactory'
-    App\Provider\ShopProvider: ~
-    App\OAuth\Factory\AuthenticatorFactoryInterface: '@App\OAuth\Factory\AuthenticatorFactory'
-    App\Service\Persistence\ShopPersistenceServiceInterface: '@App\Service\Persistence\ShopPersistenceService'
-    App\Service\Token\TokenManagerInterface: '@App\Service\Token\TokenManager'
-    App\Service\OAuth\Authentication\AuthenticationServiceInterface: '@App\Service\OAuth\Authentication\AuthenticationService'
+    App\Security\HashValidator:
+        arguments:
+            $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
+    App\Factory\ShopFactory:
+        arguments:
+            $logger: '@monolog.logger'
+    App\MessageHandler\CreateExternalPaymentHandler:
+        arguments:
+            $logger: '@monolog.logger'
+    App\Service\Persistence\ShopPersistenceService:
+        arguments:
+            $logger: '@monolog.logger'
+    App\Service\AppStoreEventProcessor:
+        arguments:
+            $logger: '@monolog.logger'
+    App\Service\OAuth\Authentication\AuthenticationService:
+        arguments:
+            $logger: '@monolog.logger'
 
     # Registration of external services
     DreamCommerce\Component\Common\Http\GuzzleClient:
 
     DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient:
+
+    DreamCommerce\Component\ShopAppstore\Model\Application:
+        arguments:
+            $appId: '%env(APP_CLIENT)%'
+            $appSecret: '%env(APP_SECRET)%'
+            $appstoreSecret: '%env(APPSTORE_APP_SECRET)%'

@@ -22,40 +22,49 @@ class CreateExternalPaymentHandler
         $this->oauthService = $oauthService;
     }
 
-    public function __invoke(CreateExternalPaymentMessage $message): void
+    public function __invoke(CreateExternalPaymentMessage $message): bool
     {
-        $event = $message->getEvent();
+        $shopModel = new Shop(
+            $message->getShopCode(),
+            $message->getShopUrl(),
+            $message->getShopVersion(),
+        );
+
         $paymentData = [
-            'currencies'   => [1],
-            'name'         => 'external',
+            'currencies'   => $message->getCurrencies(),
+            'name'         => $message->getName(),
             'translations' => [
-                'pl_PL' => [
-                    'title'   => "Płatność (" . uniqid() . ') z aplikacji zewnętrznej',
-                    'lang_id' => 1,
-                    'active'  => 1,
-                    'description' => 'Opis płatności zewnętrznej '. rand(),
-                ],
+                $message->getLocale() => [
+                    'title'         => $message->getTitle(),
+                    'description'   => $message->getDescription(),
+                    'lang_id'       => 1,
+                    'active'        => 1
+                ]
             ]
         ];
 
         try {
-            $shop = $this->oauthService->getShop(Shop::fromEvent($event));
-
+            $oauthShop = $this->oauthService->getShop($shopModel);
             $shopClient = $this->oauthService->getShopClient();
             $paymentResource = new PaymentResource($shopClient);
-            $result = $paymentResource->insert($shop, $paymentData);
-            $this->logger->info('Success: External payment created using PaymentResource::insert', [
-                'shop_url' => $shop->getUri(),
-                'result' => $result->getData(),
+            $result = $paymentResource->insert($oauthShop, $paymentData);
+
+            $this->logger->info('Payment created successfully', [
+                'shop_code' => $message->getShopCode(),
+                'payment_name' => $message->getName(),
+                'payment_id' => $result->getExternalId(),
             ]);
+
+            return true;
         } catch (ApiException $e) {
-            $this->logger->error('Error: Failed to create external payment using PaymentResource::insert', [
-                'shop_url' => $event->shopUrl,
+            $this->logger->error('Error creating payment', [
+                'shop_code' => $message->getShopCode(),
                 'error_message' => $e->getMessage(),
                 'error_code' => $e->getCode(),
-                'request_data' => $paymentData,
                 'trace' => $e->getTraceAsString()
             ]);
+
+            return false;
         }
     }
 }

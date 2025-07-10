@@ -34,7 +34,17 @@ class AppStoreEventProcessor
              * You should store it for each installation.
              */
             $this->oauthService->authenticate($event);
-            $this->bus->dispatch(new CreateExternalPaymentMessage($event));
+            $this->bus->dispatch(new CreateExternalPaymentMessage(
+                $event->shopId,
+                $event->shopUrl,
+                $event->version,
+                'external',
+                'External Payment '.uniqid().' from example App', // Example payment name must be unique
+                'External payment created during installation',
+                true,
+                [1], // Assuming 1 is base currency ID for polish zloty
+                'pl_PL' // Assuming Polish locale for the example
+            ));
         }
 
         if ($event->action === AppStoreLifecycleAction::UPGRADE) {
@@ -44,14 +54,14 @@ class AppStoreEventProcessor
                 $this->logger->info('Application version update during upgrade', [
                     'shop_id' => $event->shopId,
                     'shop_url' => $event->shopUrl,
-                    'version' => $event->version ?? 'unknown',
+                    'version' => $event->version,
                     'success' => true
                 ]);
             } catch (\Throwable $e) {
                 $this->logger->error('Upgrade failed', [
                     'shop_id' => $event->shopId,
                     'shop_url' => $event->shopUrl,
-                    'version' => $event->version ?? 'unknown',
+                    'version' => $event->version,
                     'error_message' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);

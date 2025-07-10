@@ -7,7 +7,7 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-final class Version20250609CreateShopsInstalled extends AbstractMigration
+final class Version20250609110132 extends AbstractMigration
 {
     public function getDescription(): string
     {
@@ -16,16 +16,15 @@ final class Version20250609CreateShopsInstalled extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE shops_installed (
+        $this->addSql('CREATE TABLE shop_app_installations (
             id INT UNSIGNED AUTO_INCREMENT NOT NULL,
             shop VARCHAR(100) NOT NULL,
             shop_url VARCHAR(255) NOT NULL,
             application_version INT NOT NULL,
             auth_code VARCHAR(100) NOT NULL,
             created_at DATETIME NOT NULL,
-            tokens LONGTEXT DEFAULT NULL,
             PRIMARY KEY(id)
-        ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8_general_ci` ENGINE = InnoDB;');
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB;');
     }
 
     public function down(Schema $schema): void
@@ -33,4 +32,3 @@ final class Version20250609CreateShopsInstalled extends AbstractMigration
         $this->addSql('DROP TABLE shops_installed');
     }
 }
-

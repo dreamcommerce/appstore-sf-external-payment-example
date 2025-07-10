@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Security;
 
-use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
