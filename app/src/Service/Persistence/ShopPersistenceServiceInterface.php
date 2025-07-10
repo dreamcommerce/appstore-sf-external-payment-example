@@ -3,7 +3,6 @@
 namespace App\Service\Persistence;
 
 use App\Domain\Shop\Model\Shop;
-use App\Service\Event\AppStoreLifecycleEvent;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 
 interface ShopPersistenceServiceInterface
@@ -15,7 +14,7 @@ interface ShopPersistenceServiceInterface
      * @param string $authCode Authorization code from the event
      * @throws \RuntimeException on error
      */
-    public function saveShopInstalled(OAuthShop $shop, string $authCode): void;
+    public function saveShopAppInstallation(OAuthShop $shop, string $authCode): void;
 
     /**
      * Updates application version for existing shop installation

@@ -2,24 +2,23 @@
 
 namespace App\Repository;
 
-use App\Entity\ShopInstalled;
+use App\Entity\ShopAppInstallation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-class ShopInstalledRepository extends ServiceEntityRepository
+class ShopAppInstallationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, ShopInstalled::class);
+        parent::__construct($registry, ShopAppInstallation::class);
     }
 
-    public function save(ShopInstalled $shopInstalled, bool $flush = true): void
+    public function save(ShopAppInstallation $shopAppInstallation, bool $flush = true): void
     {
         $em = $this->getEntityManager();
-        $em->persist($shopInstalled);
+        $em->persist($shopAppInstallation);
         if ($flush) {
             $em->flush();
         }
     }
 }
-

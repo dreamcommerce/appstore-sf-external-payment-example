@@ -3,9 +3,9 @@
 namespace App\Service\Persistence;
 
 use App\Domain\Shop\Model\Shop;
-use App\Entity\ShopInstalled;
-use App\Repository\ShopInstalledRepository;
-use App\Service\Event\AppStoreLifecycleEvent;
+use App\Entity\ShopAppInstallation;
+use App\Factory\ShopAppInstallationFactory;
+use App\Repository\ShopAppInstallationRepository;
 use App\Service\Token\TokenManagerInterface;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 use Psr\Log\LoggerInterface;
@@ -13,27 +13,23 @@ use Psr\Log\LoggerInterface;
 class ShopPersistenceService implements ShopPersistenceServiceInterface
 {
     private LoggerInterface $logger;
-    private ShopInstalledRepository $shopInstalledRepository;
+    private ShopAppInstallationRepository $shopAppInstallationRepository;
     private TokenManagerInterface $tokenManager;
+    private ShopAppInstallationFactory $shopAppInstallationFactory;
 
     public function __construct(
         LoggerInterface $logger,
-        ShopInstalledRepository $shopInstalledRepository,
-        TokenManagerInterface $tokenManager
+        ShopAppInstallationRepository $shopAppInstallationRepository,
+        TokenManagerInterface $tokenManager,
+        ShopAppInstallationFactory $shopAppInstallationFactory
     ) {
         $this->logger = $logger;
-        $this->shopInstalledRepository = $shopInstalledRepository;
+        $this->shopAppInstallationRepository = $shopAppInstallationRepository;
         $this->tokenManager = $tokenManager;
+        $this->shopAppInstallationFactory = $shopAppInstallationFactory;
     }
 
-    /**
-     * Save shop installation data to repository
-     *
-     * @param OAuthShop $shop Shop instance to save
-     * @param string $authCode Authorization code from the event
-     * @throws \RuntimeException on error
-     */
-    public function saveShopInstalled(OAuthShop $shop, string $authCode): void
+    public function saveShopAppInstallation(OAuthShop $shop, string $authCode): void
     {
         if (!$shop->getToken()) {
             $this->logger->warning('Cannot save shop: Token is missing', [
@@ -43,61 +39,81 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
         }
 
         try {
-            $shopInstalled = (new ShopInstalled())
-                ->setShop((string)$shop->getId())
-                ->setShopUrl((string)$shop->getUri())
-                ->setAuthCode($authCode)
-                ->setApplicationVersion(($shop->getVersion() ?? 1))
-                ->setTokens($this->tokenManager->prepareTokenResponse($shop));
+            $shopAppInstallation = $this->shopAppInstallationFactory->fromOAuthShop($shop, $authCode);
+            $tokenData = $this->tokenManager->prepareTokenResponse($shop);
 
-            $this->shopInstalledRepository->save($shopInstalled);
+            $shopToken = $this->shopAppInstallationFactory->createToken($shopAppInstallation, $tokenData);
+            $shopAppInstallation->addToken($shopToken);
+
+            $this->shopAppInstallationRepository->save($shopAppInstallation);
             $this->logger->info('Shop installation data saved successfully', [
                 'shop_id' => $shop->getId(),
                 'shop_url' => $shop->getUri()
             ]);
-        } catch (\Exception $e) {
-            $this->logger->error('Error while saving shop installation data', [
-                'shop_url' => $shop->getUri(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+        } catch (\Throwable $exception) {
+            $this->logger->error('Error while saving shop data', [
+                'shop_id' => $shop->getId(),
+                'error' => $exception->getMessage()
             ]);
-            throw $e;
+            throw $exception;
+        }
+    }
+
+    public function updateShopToken(OAuthShop $shop): void
+    {
+        $shopId = (string)$shop->getId();
+        $shopAppInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
+
+        if (!$shopAppInstallation) {
+            $this->logger->warning('Cannot update token: Shop not found', [
+                'shop_id' => $shopId
+            ]);
+            return;
+        }
+
+        try {
+            $tokenData = $this->tokenManager->prepareTokenResponse($shop);
+            $shopToken = $this->shopAppInstallationFactory->createToken($shopAppInstallation, $tokenData);
+            $shopAppInstallation->addToken($shopToken);
+
+            $this->shopAppInstallationRepository->save($shopAppInstallation);
+            $this->logger->info('Shop token updated successfully', [
+                'shop_id' => $shopId
+            ]);
+        } catch (\Throwable $exception) {
+            $this->logger->error('Error while updating shop token', [
+                'shop_id' => $shopId,
+                'error' => $exception->getMessage()
+            ]);
         }
     }
 
     public function updateApplicationVersion(OAuthShop $OAuthShop, Shop $shop): void
     {
-        $shopId = $shop->getShopId();
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopId]);
+        $shopId = (string)$OAuthShop->getId();
+        $shopAppInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
 
-        if (!$shopInstalled) {
-            $this->logger->warning('Cannot update version: Shop not found in repository', [
+        if (!$shopAppInstallation) {
+            $this->logger->warning('Cannot update application version: Shop not found', [
                 'shop_id' => $shopId
             ]);
-            throw new \RuntimeException('Cannot update version: Shop not found in repository for shop_id: ' . $shopId);
+            return;
         }
 
         try {
-            $shopInstalled->setApplicationVersion($OAuthShop->getVersion() ?? $shop->getVersion() ?? 1);
-            if ($OAuthShop->getToken()) {
-                $shopInstalled->setTokens($this->tokenManager->prepareTokenResponse($OAuthShop));
-            }
+            /** @var ShopAppInstallation $shopAppInstallation  */
+            $shopAppInstallation->setApplicationVersion($shop->getVersion() ?? $OAuthShop->getVersion() ?? 1);
+            $this->shopAppInstallationRepository->save($shopAppInstallation);
 
-            $this->shopInstalledRepository->save($shopInstalled);
-
-            $this->logger->info('Application version updated successfully', [
+            $this->logger->info('Shop application version updated successfully', [
                 'shop_id' => $shopId,
-                'shop_url' => $OAuthShop->getUri(),
-                'version' => $OAuthShop->getVersion() ?? $shop->getVersion() ?? 1
+                'version' => $shopAppInstallation->getApplicationVersion()
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $exception) {
             $this->logger->error('Error while updating application version', [
-                'shop_id' => $shop->getShopId(),
-                'shop_url' => $shop->getShopUrl(),
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'shop_id' => $shopId,
+                'error' => $exception->getMessage()
             ]);
-            throw $e;
         }
     }
 }

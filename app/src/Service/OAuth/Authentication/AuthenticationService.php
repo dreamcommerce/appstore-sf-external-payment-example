@@ -37,14 +37,27 @@ class AuthenticationService implements AuthenticationServiceInterface
      */
     public function authenticate(OAuthShop $shop): void
     {
-        if ($shop->isAuthenticated()) {
-            $this->logger->info('Shop is already authenticated');
-            return;
-        }
+        $this->logger->info('Starting OAuth authentication for shop', [
+            'shop' => $shop->getId(),
+            'shop_url' => $shop->getUri(),
+            'auth_code' => $shop->getAuthCode()
+        ]);
 
-        $authenticator = $this->authenticatorFactory->createAuthenticator();
-        $authenticator->authenticate($shop);
-        $this->logger->info('OAuth authentication successful');
+        try {
+            $authenticator = $this->authenticatorFactory->createAuthenticator();
+            $authenticator->authenticate($shop);
+            
+            $this->logger->info('OAuth authentication successful', [
+                'shop' => $shop->getId()
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('OAuth authentication failed', [
+                'shop' => $shop->getId(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 
     /**
@@ -55,38 +68,20 @@ class AuthenticationService implements AuthenticationServiceInterface
      */
     public function processAuthentication(AppStoreLifecycleEvent $event): void
     {
-        try {
-            $shopData = $this->prepareShopDataFromEvent($event);
-            $shop = $this->shopFactory->getOAuthShop($shopData);
+        $shopData = Shop::fromEvent($event);
+        $shop = $this->shopFactory->getOAuthShop($shopData);
 
-            if (!$shop->isAuthenticated()) {
-                $this->authenticate($shop);
-            }
-
-            $this->shopPersistenceService->saveShopInstalled($shop, $event->authCode);
-        } catch (\Exception $e) {
-            $this->logger->error('Authentication process error', [
-                'shop_id' => $event->shopId,
-                'shop_url' => $event->shopUrl,
-                'error_message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+        if ($shop->isAuthenticated()) {
+            $this->logger->info('Already authenticated successful', [
+                'shop_id' => $shop->getId(),
             ]);
-            throw $e;
+            return;
         }
-    }
 
-    /**
-     * Prepares ShopData object based on the event
-     */
-    private function prepareShopDataFromEvent(AppStoreLifecycleEvent $event): Shop
-    {
-        $this->logger->debug('Preparing shop data from event', [
-            'id' => $event->shopId,
-            'shop_url' => $event->shopUrl,
-            'version' => $event->version,
-            'has_auth_code' => !empty($event->authCode),
-        ]);
-
-        return Shop::fromEvent($event);
+        $this->authenticate($shop);
+        $this->shopPersistenceService->saveShopAppInstallation(
+            $shop,
+            $event->authCode,
+        );
     }
 }
