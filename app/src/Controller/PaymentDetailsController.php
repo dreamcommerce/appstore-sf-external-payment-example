@@ -17,11 +17,11 @@ class PaymentDetailsController extends AbstractController
         $this->paymentService = $paymentService;
     }
 
-    #[Route('/app-store/view/payment-details/{paymentId}', name: 'payment_details', methods: ['GET'])]
+    #[Route('/app-store/view/payment-details', name: 'payment_details', methods: ['GET'])]
     public function paymentDetailsAction(Request $request): Response
     {
+        $paymentId = $request->query->get('payment-id');
         $shopCode = $request->query->get('shop');
-        $paymentId = $request->query->get('payment', 61);
         $locale = $request->query->get('translations', 'pl_PL');
         $payment = null;
 
