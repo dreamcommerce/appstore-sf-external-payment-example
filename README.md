@@ -85,20 +85,16 @@ git clone <repo-url>
 cd appstore-sf-external-payment-example/app
 ```
 
-2. Install dependencies:
-   ```bash
-   composer install
-   ```
-3. Copy the `.env.example` file to `.env` and set the required environment variables:
+2. Copy the `.env.example` file to `.env` and set the required environment variables:
    ```bash
    cp .env.example .env
    # Edit the .env file and set your secrets and database connection
    ```
-4. Start the application:
+3. Start the application:
    ```bash
-   docker compose -f .docker/docker-compose.yaml up -d
+   docker compose --env-file app/.env -f .docker/docker-compose.yaml up -d
    ```
-5. The application will be available at http://localhost:8080.
+4. The application will be available at http://localhost:8080.
 
 ---
 
