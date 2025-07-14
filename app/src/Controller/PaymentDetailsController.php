@@ -20,7 +20,7 @@ class PaymentDetailsController extends AbstractController
     #[Route('/app-store/view/payment-details', name: 'payment_details', methods: ['GET'])]
     public function paymentDetailsAction(Request $request): Response
     {
-        $paymentId = $request->query->get('payment-id');
+        $paymentId = $request->query->get('id');
         $shopCode = $request->query->get('shop');
         $locale = $request->query->get('translations', 'pl_PL');
         $payment = null;

@@ -4,6 +4,7 @@ monolog:
             type: rotating_file
             path: "%kernel.logs_dir%/dev.log"
             max_files: 10
+            max_file_size: 5242880 # 5MB
             level: debug
             channels: ["!event", "!doctrine", "!console"]
 
@@ -16,4 +17,5 @@ monolog:
             type: rotating_file
             path: "%kernel.logs_dir%/prod.log"
             max_files: 30
+            max_file_size: 5242880 # 5MB
             level: error

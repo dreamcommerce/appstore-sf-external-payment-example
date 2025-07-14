@@ -3,7 +3,8 @@
 namespace App\Service\Payment;
 
 use App\Domain\Shop\Model\Shop;
-use App\Repository\ShopInstalledRepository;
+use App\Entity\ShopAppInstallation;
+use App\Repository\ShopAppInstallationRepository;
 use App\Service\OAuth\OAuthService;
 use App\Service\Payment\Util\CurrencyHelper;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\PaymentResource;
@@ -16,33 +17,37 @@ class PaymentService implements PaymentServiceInterface
 {
     private LoggerInterface $logger;
     private OAuthService $oauthService;
-    private ShopInstalledRepository $shopInstalledRepository;
+    private ShopAppInstallationRepository $shopAppInstallationRepository;
     private CurrencyHelper $currencyHelper;
     private PaymentMapper $paymentMapper;
 
     public function __construct(
         LoggerInterface $logger,
         OAuthService $oauthService,
-        ShopInstalledRepository $shopInstalledRepository,
+        ShopAppInstallationRepository $shopInstalledRepository,
         CurrencyHelper $currencyHelper,
         PaymentMapper $paymentMapper
     ) {
         $this->logger = $logger;
         $this->oauthService = $oauthService;
-        $this->shopInstalledRepository = $shopInstalledRepository;
+        $this->shopAppInstallationRepository = $shopInstalledRepository;
         $this->currencyHelper = $currencyHelper;
         $this->paymentMapper = $paymentMapper;
     }
 
     private function getShopAndClient(string $shopCode): ?array
     {
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
-        if (!$shopInstalled) {
+        $shopAppInstalled = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopCode]);
+        if (!$shopAppInstalled) {
             $this->logger->error('Shop not found', ['shop_code' => $shopCode]);
             return null;
         }
 
-        $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
+        $shopModel = new Shop(
+            $shopAppInstalled->getShop(),
+            $shopAppInstalled->getShopUrl(),
+            $shopAppInstalled->getApplicationVersion(),
+        );
         $oauthShop = $this->oauthService->getShop($shopModel);
         $shopClient = $this->oauthService->getShopClient();
 
@@ -154,14 +159,18 @@ class PaymentService implements PaymentServiceInterface
         if (!$shopCode) {
             return [];
         }
-        
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
-        if (!$shopInstalled) {
+
+        $shopAppInstalled = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopCode]);
+        if (!$shopAppInstalled) {
             return [];
         }
 
         try {
-            $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
+            $shopModel = new Shop(
+                $shopAppInstalled->getShop(),
+                $shopAppInstalled->getShopUrl(),
+                $shopAppInstalled->getApplicationVersion(),
+            );
             $oauthShop = $this->oauthService->getShop($shopModel);
             
             $shopClient = $this->oauthService->getShopClient();
@@ -195,14 +204,18 @@ class PaymentService implements PaymentServiceInterface
 
     public function getPaymentById(string $shopCode, int $paymentId, string $locale): array
     {
-        $shopInstalled = $this->shopInstalledRepository->findOneBy(['shop' => $shopCode]);
-        if (!$shopInstalled) {
+        $shopAppInstalled = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopCode]);
+        if (!$shopAppInstalled) {
             $this->logger->error('Shop not found when fetching payment', ['shop_code' => $shopCode]);
             return [];
         }
 
         try {
-            $shopModel = new Shop($shopCode, $shopInstalled->getShopUrl());
+            $shopModel = new Shop(
+                $shopAppInstalled->getShop(),
+                $shopAppInstalled->getShopUrl(),
+                $shopAppInstalled->getApplicationVersion(),
+            );
             $oauthShop = $this->oauthService->getShop($shopModel);
             $shopClient = $this->oauthService->getShopClient();
             $paymentResource = new PaymentResource($shopClient);
