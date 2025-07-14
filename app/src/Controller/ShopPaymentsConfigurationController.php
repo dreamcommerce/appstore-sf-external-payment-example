@@ -11,7 +11,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Messenger\MessageBusInterface;
-use Symfony\Component\Messenger\Stamp\HandledStamp;
 use Symfony\Component\Routing\Annotation\Route;
 
 class ShopPaymentsConfigurationController extends AbstractController
@@ -62,23 +61,18 @@ class ShopPaymentsConfigurationController extends AbstractController
 
         try {
             $message = new DeletePaymentMessage($shopCode, $paymentId);
-            $envelope = $this->messageBus->dispatch($message);
-            $handledStamps = $envelope->all(HandledStamp::class);
-            $success = $handledStamps[0]->getResult() ?? false;
-
-            if ($success) {
-                return $this->json(['success' => true]);
-            }
+            $this->messageBus->dispatch($message);
+            return $this->json(['success' => true, 'message' => 'Delete request accepted for processing.']);
         } catch (\Exception $e) {
             $this->logger->error('Controller error during payment delete', [
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'shop' => $shopCode,
             ]);
+            return $this->json(['success' => false, 'error' => 'Error while deleting payment'], 500);
         }
-
-        return $this->json(['success' => false, 'error' => 'Error while deleting payment'], 500);
     }
 
     #[Route('/app-store/view/payments-configuration/edit', name: 'payments_configuration_edit', methods: ['POST'])]
@@ -95,8 +89,7 @@ class ShopPaymentsConfigurationController extends AbstractController
         }
 
         $data = [
-            'currencies' => [1],
-            'supportedCurrencies' => ['PLN'],
+            'currencies' => [1]
         ];
 
         if ($visible !== null) {
@@ -112,18 +105,18 @@ class ShopPaymentsConfigurationController extends AbstractController
 
         try {
             $message = new UpdatePaymentMessage($shopCode, $paymentId, $data);
-            $envelope = $this->messageBus->dispatch($message);
-            $handledStamps = $envelope->all(HandledStamp::class);
-            $success = $handledStamps[0]->getResult() ?? false;
-
-            if ($success) {
-                return $this->json(['success' => true]);
-            }
+            $this->messageBus->dispatch($message);
+            return $this->json(['success' => true, 'message' => 'Edit request accepted for processing.']);
         } catch (\Throwable $e) {
+            $this->logger->error('Controller error during payment edit', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'shop' => $shopCode,
+                'trace' => $e->getTraceAsString(),
+            ]);
             return $this->json(['success' => false, 'error' => 'An error occurred while editing the payment'], 500);
         }
-
-        return $this->json(['success' => false, 'error' => 'Error while updating payment'], 500);
     }
 
     #[Route('/app-store/view/payments-configuration/create', name: 'payments_configuration_create', methods: ['POST'])]
@@ -158,23 +151,17 @@ class ShopPaymentsConfigurationController extends AbstractController
                 [1], // Default PLN
                 $locale
             );
-
-            $envelope = $this->messageBus->dispatch($message);
-            $handledStamps = $envelope->all(HandledStamp::class);
-            $success = $handledStamps[0]->getResult() ?? false;
-
-            if ($success) {
-                return $this->json(['success' => true]);
-            }
+            $this->messageBus->dispatch($message);
+            return $this->json(['success' => true, 'message' => 'Create request accepted for processing.']);
         } catch (\Exception $e) {
             $this->logger->error('Controller error during payment creation', [
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString()
+                'shop' => $shopCode,
+                'trace' => $e->getTraceAsString(),
             ]);
+            return $this->json(['success' => false, 'error' => 'Error while creating payment'], 500);
         }
-
-        return $this->json(['success' => false, 'error' => 'Error while creating payment'], 500);
     }
 }
