@@ -21,7 +21,7 @@ services:
     entrypoint: ["/bin/sh", "-c", "composer install --no-interaction && php bin/console cache:clear && php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate --no-interaction && php -S 0.0.0.0:8080 -t public"]
 
   database:
-    image: mysql:8.0.33
+    image: mysql:8.0.42
     container_name: database
     restart: on-failure
     environment:
