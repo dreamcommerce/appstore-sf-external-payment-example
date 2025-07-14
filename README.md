@@ -47,50 +47,62 @@ The codebase is ready for further extension with new event types, API integratio
 ## Requirements
 
 - PHP 8.2+
-- Symfony 6+
+- Symfony 7+
 - Composer
+
+> **Note:** You do NOT need to install PHP or Composer locally if you use the `dev.sh` script or Docker Compose. These are only required for manual setup or if you want to run the app without Docker.
 
 ## Installation
 
-### 1. Clone the repository
+You can set up the project in two ways:
+
+### Option 1: Quick start for developers (recommended)
+
+1. Clone the repository and enter the app directory:
 
 ```bash
 git clone <repo-url>
 cd appstore-sf-external-payment-example/app
 ```
 
-### 2. Install dependencies
+2. Then use the provided `dev.sh` script to automate the entire setup (environment, dependencies, Docker, migrations):
 
 ```bash
-composer install
+chmod +x ./dev.sh  # only once, if needed
+./dev.sh
 ```
 
-### 3. Configure environment
+3. The application will be available at http://localhost:8080.
 
-Copy the `.env.example` file to `.env` and set the required environment variables:
+---
+
+### Option 2: Manual setup with Docker Compose
+
+1. Clone the repository and enter the app directory:
 
 ```bash
-cp .env.example .env
-# Edit the .env file and set:
-# APPSTORE_APP_SECRET=your_appstore_secret_key
-# APP_CLIENT=your_client_key
-# APP_SECRET=your_secret_key
-# DATABASE_URL="mysql://user:pass@localhost:3306/dbname"
-# MESSENGER_TRANSPORT_DSN=doctrine://default
+git clone <repo-url>
+cd appstore-sf-external-payment-example/app
 ```
 
-Configure the database connection in the `.env` file as well.
+2. Install dependencies:
+   ```bash
+   composer install
+   ```
+3. Copy the `.env.example` file to `.env` and set the required environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit the .env file and set your secrets and database connection
+   ```
+4. Start the application:
+   ```bash
+   docker compose -f .docker/docker-compose.yaml up -d
+   ```
+5. The application will be available at http://localhost:8080.
 
-### 4. Run the application (Docker)
+---
 
-```bash
-docker compose -f .docker/docker-compose.yaml up -d
-```
-
-The application will be available at http://localhost:8080.
-
-
-### 5. Configure in Shoper AppTools
+###  Configure in Shoper AppTools
 
 Configure the application in Shoper AppTools and set the URLs to your local or production environment.
 
@@ -132,37 +144,3 @@ ngrok http 8080
 
 After running ngrok, you will get a public HTTPS URL (e.g. `https://abc123.ngrok.io`).  
 Use this URL in Shoper AppTools as your app's endpoint.
-
-## Development environment
-
-For local development and onboarding, you can use the provided `dev.sh` script. It automates environment setup, dependency installation, database migrations, and Docker startup. Simply run:
-
-```bash
-./app/dev.sh
-```
-
-This will ensure your environment is ready and the application is available at http://localhost:8080 (via Docker).
-
-## Usage: Development vs Production/VM
-
-### Local development (recommended for contributors)
-- By default, the `docker-compose.yaml` mounts the entire `app/` directory (including `vendor/`) as a volume into the PHP container.
-- This allows you to run `composer install` locally (e.g. via `./app/dev.sh`), so your IDE and tools have full access to dependencies.
-- Any changes to dependencies (e.g. `composer require`) are immediately reflected in the container.
-
-### Production/VM/CI
-- For production, VM, or CI environments, **remove or comment out the `volumes:` line** in the PHP service in `.docker/docker-compose.yaml`:
-  ```yaml
-    # volumes:
-    #   - ../app:/var/www/html
-  ```
-- This ensures the container uses dependencies installed during the Docker image build (`composer install` in the Dockerfile), making the image self-contained and portable.
-- You do not need PHP or Composer on the host machine.
-
----
-
-## Note on wait-for-it.sh and database readiness
-
-- The `wait-for-it.sh` script is used only in the `messenger-worker` container to ensure that the worker waits for the database to be ready before starting message consumption.
-- The main PHP application container does not use `wait-for-it.sh` and starts immediately, as it does not require an immediate database connection on startup.
-- This setup prevents connection errors in the worker and speeds up the main application startup.
