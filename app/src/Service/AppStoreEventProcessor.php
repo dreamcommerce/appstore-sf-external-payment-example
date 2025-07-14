@@ -2,7 +2,7 @@
 
 namespace App\Service;
 
-use App\Message\CreateExternalPaymentMessage;
+use App\Message\CreatePaymentMessage;
 use App\Service\Event\AppStoreLifecycleAction;
 use App\Service\Event\AppStoreLifecycleEvent;
 use App\Service\OAuth\OAuthService;
@@ -34,16 +34,14 @@ class AppStoreEventProcessor
              * You should store it for each installation.
              */
             $this->oauthService->authenticate($event);
-            $this->bus->dispatch(new CreateExternalPaymentMessage(
+            $this->bus->dispatch(new CreatePaymentMessage(
                 $event->shopId,
-                $event->shopUrl,
-                $event->version,
                 'external',
-                'External Payment '.uniqid().' from example App', // Example payment name must be unique
+                'External Payment '.uniqid().' from example App',
                 'External payment created during installation',
                 true,
-                [1], // Assuming 1 is base currency ID for polish zloty
-                'pl_PL' // Assuming Polish locale for the example
+                [1], // Assuming 1 is base currency ID for polish zloty TODO fetch from shop API
+                'pl_PL' // Assuming Polish locale for the example TODO fetch from shop API
             ));
         }
 
