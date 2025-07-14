@@ -12,28 +12,20 @@ if [ ! -f .env ]; then
   cp .env.example .env
 fi
 
-# 2. Install dependencies
-if [ ! -d "vendor" ]; then
-  echo "Installing Composer dependencies..."
-  composer install
-else
-  echo "Updating Composer dependencies..."
-  composer update
+# 2. Setting path to .env file
+ENV_FILE="../app/.env"
+if [ ! -f "$ENV_FILE" ]; then
+  echo "The $ENV_FILE file does not exist Copy .env.example to .env."
+  exit 1
 fi
 
 # 3. Start Docker if .docker/docker-compose.yaml exists
 if [ -f "../.docker/docker-compose.yaml" ]; then
   echo "Starting Docker containers..."
-  docker compose -f ../.docker/docker-compose.yaml up -d
+  docker compose --env-file $ENV_FILE -f ../.docker/docker-compose.yaml up -d
   echo "App running at http://localhost:8080 (Docker)"
 else
   echo ".docker/docker-compose.yaml not found. Please start your environment manually."
-  exit 1
-fi
-
-# 4. Check if PHP container is running before running migrations
-if ! docker compose -f ../.docker/docker-compose.yaml ps --format '{{.Names}}' | grep -q "php"; then
-  echo "PHP container is not running. Please check your Docker setup."
   exit 1
 fi
 
