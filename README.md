@@ -38,7 +38,7 @@ The application handles lifecycle events:
 ### Routes
 
 - `/app-store/view/hello-world` – main application interface loaded in the Shoper admin panel iframe
-- `/app-store/event` – endpoint for handling installation/uninstallation events (AppStore webhooks)
+- `/app-store/event` – endpoint for handling installation/uninstallation events (AppStore webhooks)s
 - `/app-store/view/payments-configuration` – payment configuration list view for all created payments from current application
 - `/app-store/view/payment-details` – endpoint for viewing details of a specific payment in their own iframe
 
@@ -49,35 +49,66 @@ The codebase is ready for further extension with new event types, API integratio
 ## Requirements
 
 - PHP 8.2+
-- Symfony 6+
+- Symfony 7+
 - Composer
+
+> **Note:** You do NOT need to install PHP or Composer locally if you use the `dev.sh` script or Docker Compose. These are only required for manual setup or if you want to run the app without Docker.
 
 ## Installation
 
-1. Clone the repository
-2. Install dependencies: `bash cd app && composer install`
-3. Configure the database connection in the `.env` file
-4. Run migrations: `php bin/console doctrine:migrations:migrate`
-5. Configure the application in the Shoper AppTools and point application URLs to your local or production environment
+You can set up the project in two ways:
 
-## Environment variables
+### Option 1: Quick start for developers (recommended)
 
-6. Copy `.env.example` and set other required configuration:
-   ```
-    APPSTORE_APP_SECRET=your_appstore_secret_key
-    APP_CLIENT=your_client_key
-    APP_SECRET=your_secret_key
-   ```
-
-### Docker Setup
-
-Build and start the Docker containers:
+1. Clone the repository and enter the app directory:
 
 ```bash
- docker compose -f .docker/docker-compose.yaml up
+git clone <repo-url>
+cd appstore-sf-external-payment-example/app
 ```
 
-The application will be available at http://localhost:8080
+2. Then use the provided `dev.sh` script to automate the entire setup (environment, dependencies, Docker, migrations):
+
+```bash
+chmod +x ./dev.sh  # only once, if needed
+./dev.sh
+```
+
+3. The application will be available at http://localhost:8080.
+
+---
+
+### Option 2: Manual setup with Docker Compose
+
+1. Clone the repository and enter the app directory:
+
+```bash
+git clone <repo-url>
+cd appstore-sf-external-payment-example/app
+```
+
+2. Install dependencies:
+   ```bash
+   composer install
+   ```
+3. Copy the `.env.example` file to `.env` and set the required environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit the .env file and set your secrets and database connection
+   ```
+4. Start the application:
+   ```bash
+   docker compose -f .docker/docker-compose.yaml up -d
+   ```
+5. The application will be available at http://localhost:8080.
+
+---
+
+###  Configure in Shoper AppTools
+
+Configure the application in Shoper AppTools and set the URLs to your local or production environment.
+
+---
 
 ### Local development with admin panel
 
@@ -94,4 +125,24 @@ Example configuration for cloudflare tunnel and linux
 ```shell
  sudo cloudflared tunnel run --token <token>
 ```
----
+
+#### Exposing your local environment with ngrok
+
+If you want to expose your local Symfony app to the internet (e.g. for Shoper AppTools integration), you can use [ngrok](https://ngrok.com/):
+
+```bash
+# Download and install ngrok (if you don't have it)
+# For Linux:
+wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+unzip ngrok-stable-linux-amd64.zip
+sudo mv ngrok /usr/local/bin
+
+# For Mac (Homebrew):
+brew install ngrok/ngrok/ngrok
+
+# Start ngrok tunnel for your local app (default Docker port 8080)
+ngrok http 8080
+```
+
+After running ngrok, you will get a public HTTPS URL (e.g. `https://abc123.ngrok.io`).  
+Use this URL in Shoper AppTools as your app's endpoint.
