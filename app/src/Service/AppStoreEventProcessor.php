@@ -8,6 +8,7 @@ use App\Service\Event\AppStoreLifecycleEvent;
 use App\Service\OAuth\OAuthService;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Psr\Log\LoggerInterface;
+use App\ValueObject\PaymentData;
 
 class AppStoreEventProcessor
 {
@@ -34,15 +35,12 @@ class AppStoreEventProcessor
              * You should store it for each installation.
              */
             $this->oauthService->authenticate($event);
-            $this->bus->dispatch(new CreatePaymentMessage(
-                $event->shopId,
-                'external',
-                'External Payment '.uniqid().' from example App',
-                'External payment created during installation',
-                true,
-                [1], // Assuming 1 is base currency ID for polish zloty TODO fetch from shop API
-                'pl_PL' // Assuming Polish locale for the example TODO fetch from shop API
-            ));
+
+            $paymentData = PaymentData::createForNewPayment(
+                'External Payment '.uniqid().' from example App', // title
+                'External payment created during installation',   // description
+            );
+            $this->bus->dispatch(new CreatePaymentMessage($event->shopId, $paymentData));
         }
 
         if ($event->action === AppStoreLifecycleAction::UPGRADE) {

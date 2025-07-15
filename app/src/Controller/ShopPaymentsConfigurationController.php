@@ -6,6 +6,7 @@ use App\Message\CreatePaymentMessage;
 use App\Message\DeletePaymentMessage;
 use App\Message\UpdatePaymentMessage;
 use App\Service\Payment\PaymentServiceInterface;
+use App\ValueObject\PaymentData;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -88,23 +89,22 @@ class ShopPaymentsConfigurationController extends AbstractController
             return $this->json(['success' => false, 'error' => 'Missing required data'], 400);
         }
 
-        $data = [
+        $updateData = [
             'currencies' => [1]
         ];
 
         if ($visible !== null) {
-            $data['visible'] = $visible;
+            $updateData['visible'] = $visible === '1';
         }
 
         if ($active !== null) {
-            $data['translations'][$locale] = [
-                'active' => $active,
-                'title' => $request->request->get('name'),
-            ];
+            $updateData['active'] = $active === '1';
+            $updateData['title'] = $request->request->get('name');
         }
 
         try {
-            $message = new UpdatePaymentMessage($shopCode, $paymentId, $data);
+            $paymentData = PaymentData::createForUpdate($updateData, $locale);
+            $message = new UpdatePaymentMessage($shopCode, $paymentId, $paymentData);
             $this->messageBus->dispatch($message);
             return $this->json(['success' => true, 'message' => 'Edit request accepted for processing.']);
         } catch (\Throwable $e) {
@@ -123,34 +123,34 @@ class ShopPaymentsConfigurationController extends AbstractController
     public function createPaymentAction(Request $request): Response
     {
         $shopCode = $request->query->get('shop');
-        $name = $request->request->get('name');
         $title = $request->request->get('title');
         $description = $request->request->get('description');
-        $visible = $request->request->get('visible') === '1';
+        $active = $request->request->get('visible') === '1';
         $locale = $request->request->get('locale', 'pl_PL');
 
         $this->logger->info('Create payment request', [
             'shop' => $shopCode,
-            'name' => $name,
             'title' => $title,
-            'visible' => $visible,
+            'active' => $active,
             'locale' => $locale
         ]);
 
-        if (!$shopCode || !$name || !$title) {
+        if (!$shopCode || !$title) {
             return $this->json(['success' => false, 'error' => 'Missing required data'], 400);
         }
 
         try {
-            $message = new CreatePaymentMessage(
-                $shopCode,
-                $name,
+            // Utworzenie Value Object zgodnie z nowym interfejsem
+            $paymentData = PaymentData::createForNewPayment(
                 $title,
-                $description ?? 'Payment created from configuration panel',
-                $visible,
-                [1], // Default PLN
+                $description,
+                $active,
+                [1], // Default PLN currency ID
+                ['PLN'], // Supported currencies
                 $locale
             );
+
+            $message = new CreatePaymentMessage($shopCode, $paymentData);
             $this->messageBus->dispatch($message);
             return $this->json(['success' => true, 'message' => 'Create request accepted for processing.']);
         } catch (\Exception $e) {

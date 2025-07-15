@@ -21,20 +21,21 @@ class CreatePaymentHandler
 
     public function __invoke(CreatePaymentMessage $message): bool
     {
+        $paymentData = $message->getPaymentData();
         $this->logger->info('Handling CreatePaymentMessage', [
             'shop_code' => $message->getShopCode(),
-            'name' => $message->getName(),
-            'title' => $message->getTitle()
+            'name' => $paymentData->getName(),
+            'title' => $paymentData->getTitle()
         ]);
         
         return $this->paymentService->createPayment(
             $message->getShopCode(),
-            $message->getName(),
-            $message->getTitle(),
-            $message->getDescription(),
-            $message->isVisible(),
-            $message->getCurrencies(),
-            $message->getLocale()
+            $paymentData->getName(),
+            $paymentData->getTitle($paymentData->getLocale()),
+            $paymentData->getDescription($paymentData->getLocale()),
+            $paymentData->isActive($paymentData->getLocale()) ?? true,
+            $paymentData->getCurrencies(),
+            $paymentData->getLocale()
         );
     }
 }
