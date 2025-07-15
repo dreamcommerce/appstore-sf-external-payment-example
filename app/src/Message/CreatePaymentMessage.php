@@ -2,32 +2,17 @@
 
 namespace App\Message;
 
+use App\ValueObject\PaymentData;
+
 class CreatePaymentMessage
 {
     private string $shopCode;
-    private string $name;
-    private string $title;
-    private string $description;
-    private bool $visible;
-    private array $currencies;
-    private string $locale;
+    private PaymentData $paymentData;
 
-    public function __construct(
-        string $shopCode,
-        string $name,
-        string $title,
-        string $description,
-        bool $visible,
-        array $currencies,
-        string $locale
-    ) {
+    public function __construct(string $shopCode, PaymentData $paymentData)
+    {
         $this->shopCode = $shopCode;
-        $this->name = $name;
-        $this->title = $title;
-        $this->description = $description;
-        $this->visible = $visible;
-        $this->currencies = $currencies;
-        $this->locale = $locale;
+        $this->paymentData = $paymentData;
     }
 
     public function getShopCode(): string
@@ -35,33 +20,8 @@ class CreatePaymentMessage
         return $this->shopCode;
     }
 
-    public function getName(): string
+    public function getPaymentData(): PaymentData
     {
-        return $this->name;
-    }
-
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-    public function getDescription(): string
-    {
-        return $this->description;
-    }
-
-    public function isVisible(): bool
-    {
-        return $this->visible;
-    }
-
-    public function getCurrencies(): array
-    {
-        return $this->currencies;
-    }
-
-    public function getLocale(): string
-    {
-        return $this->locale;
+        return $this->paymentData;
     }
 }

@@ -21,16 +21,18 @@ class UpdatePaymentHandler
 
     public function __invoke(UpdatePaymentMessage $message): bool
     {
+        $paymentData = $message->getPaymentData();
+
         $this->logger->info('Handling UpdatePaymentMessage', [
             'shop_code' => $message->getShopCode(),
             'payment_id' => $message->getPaymentId(),
-            'data' => $message->getData()
+            'data' => $paymentData->toArray()
         ]);
         
         return $this->paymentService->updatePayment(
             $message->getShopCode(),
             $message->getPaymentId(),
-            $message->getData()
+            $paymentData->toArray()
         );
     }
 }

@@ -2,17 +2,19 @@
 
 namespace App\Message;
 
+use App\ValueObject\PaymentData;
+
 class UpdatePaymentMessage
 {
     private string $shopCode;
     private string $paymentId;
-    private array $data;
+    private PaymentData $paymentData;
 
-    public function __construct(string $shopCode, string $paymentId, array $data)
+    public function __construct(string $shopCode, string $paymentId, PaymentData $paymentData)
     {
         $this->shopCode = $shopCode;
         $this->paymentId = $paymentId;
-        $this->data = $data;
+        $this->paymentData = $paymentData;
     }
 
     public function getShopCode(): string
@@ -25,9 +27,8 @@ class UpdatePaymentMessage
         return $this->paymentId;
     }
 
-    public function getData(): array
+    public function getPaymentData(): PaymentData
     {
-        return $this->data;
+        return $this->paymentData;
     }
 }
-
