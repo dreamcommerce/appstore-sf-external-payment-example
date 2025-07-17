@@ -34,9 +34,9 @@ class ShopPaymentsConfigurationController extends AbstractController
     public function paymentSettingsAction(Request $request): Response
     {
         $shopCode = $request->query->get('shop');
-        $locale = $request->query->get('translations', 'pl_PL');
+        $language = $request->query->get('translations', 'pl_PL');
 
-        $paymentSettings = $this->paymentService->getPaymentSettingsForShop($shopCode, $locale);
+        $paymentSettings = $this->paymentService->getPaymentSettingsForShop($shopCode, $language);
 
         return $this->render('payments-configuration.twig', [
             'paymentSettings' => $paymentSettings
@@ -83,7 +83,7 @@ class ShopPaymentsConfigurationController extends AbstractController
         $paymentId = $request->request->get('payment_id');
         $visible = $request->request->get('visible');
         $active = $request->request->get('active');
-        $locale = $request->query->get('translations', 'pl_PL');
+        $language = $request->query->get('translations', 'pl_PL');
 
         if (!$shopCode || !$paymentId) {
             return $this->json(['success' => false, 'error' => 'Missing required data'], 400);
@@ -103,7 +103,7 @@ class ShopPaymentsConfigurationController extends AbstractController
         }
 
         try {
-            $paymentData = PaymentData::createForUpdate($updateData, $locale);
+            $paymentData = PaymentData::createForUpdate($updateData, $language);
             $message = new UpdatePaymentMessage($shopCode, $paymentId, $paymentData);
             $this->messageBus->dispatch($message);
             return $this->json(['success' => true, 'message' => 'Edit request accepted for processing.']);
@@ -140,7 +140,6 @@ class ShopPaymentsConfigurationController extends AbstractController
         }
 
         try {
-            // Utworzenie Value Object zgodnie z nowym interfejsem
             $paymentData = PaymentData::createForNewPayment(
                 $title,
                 $description,

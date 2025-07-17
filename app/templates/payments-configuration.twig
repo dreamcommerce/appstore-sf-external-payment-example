@@ -1,13 +1,15 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Payment Settings{% endblock %}
-
+{% block title %}Application Payments Settings{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/payments-configuration.css') }}">
+{% endblock %}
 {% block body %}
-    <h1 id="shop-header">Payment Settings for the Shop...</h1>
     <div id="payment-setting">
         <div class="payment-list-header">
-            <h2 class="payment-list-title">Configured Payments</h2>
-            <button id="create-payment-btn" class="create-btn">
+            <h2 class="payment-list-title">Configurable Payments from Application</h2>
+            <button id="create-payment-btn" class="btn btn-success create-btn">
                 <span class="icon-plus" aria-hidden="true">+</span> Create New Payment
             </button>
         </div>
@@ -21,12 +23,14 @@
                             <span class="payment-active">{{ payment.active|capitalize }}</span>
                         </div>
                         <div class="payment-actions">
-                            <button class="edit-btn modern">Edit</button>
-                            <button class="delete-btn modern">Delete</button>
+                            <div class="actions actions-column action-panel">
+                                <button type="button" class="btn btn-primary action-edit edit-btn">Edit</button>
+                                <button type="button" class="btn btn-danger action-delete delete-btn">Delete</button>
+                            </div>
                         </div>
                     </div>
                 {% else %}
-                    <div class="payment-empty modern">No configured payments available.</div>
+                    <div class="payment-empty modern">No payments available.</div>
                 {% endfor %}
             </div>
         </div>
@@ -62,8 +66,8 @@
                 </div>
 
                 <div class="form-group">
-                    <button type="submit" class="save-btn">Save Changes</button>
-                    <button type="button" class="cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary save-btn">Save Changes</button>
+                    <button type="button" class="btn btn-outline-primary cancel-btn">Cancel</button>
                 </div>
             </form>
         </div>
@@ -80,17 +84,14 @@
                     <input type="text" id="create-payment-name" name="name" value="external" readonly class="readonly-field">
                     <small class="form-hint">The identifier is fixed and required by the API</small>
                 </div>
-
                 <div class="form-group">
                     <label for="create-payment-title">Payment Title</label>
                     <input type="text" id="create-payment-title" name="title" required placeholder="e.g., External Payment">
                 </div>
-
                 <div class="form-group">
                     <label for="create-payment-description">Payment Description</label>
                     <textarea id="create-payment-description" name="description" rows="3" placeholder="Description visible to customers"></textarea>
                 </div>
-
                 <div class="form-group">
                     <label for="create-payment-visible">Visibility</label>
                     <select id="create-payment-visible" name="visible">
@@ -98,14 +99,15 @@
                         <option value="0">Hidden</option>
                     </select>
                 </div>
-
                 <input type="hidden" id="create-payment-locale" name="locale" value="pl_PL">
-
                 <div class="form-group">
-                    <button type="submit" class="save-btn">Create Payment</button>
-                    <button type="button" class="cancel-create-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary save-btn">Create Payment</button>
+                    <button type="button" class="btn btn-outline-primary cancel-create-btn">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
+{% endblock %}
+{% block javascripts %}
+    <script src="{{ asset('assets/payments-configuration.js') }}"></script>
 {% endblock %}

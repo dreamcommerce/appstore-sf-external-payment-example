@@ -15,6 +15,9 @@ class PaymentData
         array $currencies = [],
         array $supportedCurrencies = []
     ) {
+        if (!is_array($translations)) {
+            throw new \InvalidArgumentException('Translations must be an array.');
+        }
         $this->name = $name;
         $this->translations = $translations;
         $this->currencies = $currencies;
@@ -149,7 +152,11 @@ class PaymentData
 
     public function getLocale(): string
     {
-        return array_key_first($this->translations) ?? 'pl_PL';
+        $locale = array_key_first($this->translations);
+        if ($locale === null) {
+            throw new \RuntimeException('No locale set in PaymentData translations.');
+        }
+        return $locale;
     }
 
     public function toArray(): array

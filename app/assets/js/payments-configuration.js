@@ -1,7 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var shopUrl = window.location !== window.parent.location ? document.referrer : window.location.href;
-    document.getElementById('shop-header').textContent = 'Payment settings for the store ' + shopUrl;
-
     function getUrlParam(name) {
         var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
         if (results === null) {
