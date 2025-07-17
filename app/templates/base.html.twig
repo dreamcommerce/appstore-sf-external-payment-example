@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}AppStore - Payment Panel{% endblock %}</title>
-    <link rel="stylesheet" type="text/css" href="/assets/payments-configuration.css">
     {% block stylesheets %}{% endblock %}
 </head>
 <body>
     {% block body %}{% endblock %}
     <script src="https://dcsaascdn.net/js/dc-sdk-1.0.5.min.js"></script>
-    <script src="/assets/shopapp-init.js"></script>
-    <script src="/assets/payments-configuration.js"></script>
+    <script src="{{ asset('assets/shopapp-init.js') }}"></script>
     {% block javascripts %}{% endblock %}
 </body>
 </html>
