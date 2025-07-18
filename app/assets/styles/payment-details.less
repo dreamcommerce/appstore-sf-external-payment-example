@@ -385,3 +385,117 @@
   color: #888;
   cursor: pointer;
 }
+#edit-channel-form .form-group {
+  margin-bottom: 18px;
+}
+
+#edit-channel-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+}
+
+#edit-channel-form input[type="text"],
+#edit-channel-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1em;
+  background: #f8fafc;
+  color: #222;
+  transition: border 0.2s;
+  box-sizing: border-box;
+}
+
+#edit-channel-form input[type="text"]:focus,
+#edit-channel-form textarea:focus {
+  border-color: #1976d2;
+  outline: none;
+  background: #fff;
+}
+
+#edit-channel-form textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+#edit-channel-form .btn {
+  min-width: 120px;
+  font-size: 1em;
+  padding: 9px 0;
+}
+
+#edit-channel-form .btn + .btn {
+  margin-left: 10px;
+}
+
+.close-edit-channel {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  font-size: 1.5em;
+  color: #888;
+  cursor: pointer;
+}
+.missing-translation-cell {
+  background-color: #fff8e6 !important;
+  padding: 12px !important;
+  border-bottom: 1px dashed #ffc107 !important;
+}
+
+.missing-translation-notice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 248, 230, 0.5);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.missing-translation-text {
+  color: #856404;
+  font-style: italic;
+  margin-bottom: 5px;
+}
+
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+  font-weight: 700;
+  padding: 0.35em 0.85em;
+}
+
+.add-translation-btn {
+  margin-top: 5px;
+  background-color: #f8f9fa;
+  border-color: #1976d2;
+  color: #1976d2;
+  transition: all 0.2s;
+}
+
+.add-translation-btn:hover {
+  background-color: #1976d2;
+  color: white;
+}
+
+.locale-info {
+  background-color: #fff8e6;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+  text-align: center;
+  border: 1px dashed #ffc107;
+}
+
+.locale-badge {
+  margin-right: 8px;
+}
+
+.locale-info-text {
+  color: #856404;
+  font-weight: 500;
+}
