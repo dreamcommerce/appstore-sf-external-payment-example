@@ -74,19 +74,34 @@
                                     <th>App Channel ID</th>
                                     <th>Type</th>
                                     <th>Name</th>
-                                    <th>Additional Label Info</th>
+                                    <th>Description</th>
+                                    <th>Additional Info Label</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for channel in channels %}
-                                    {% set ch_translation = channel.translations[language] ?? (channel.translations|first) %}
                                     <tr>
                                         <td>{{ channel.channel_id }}</td>
                                         <td>{{ channel.application_channel_id|default('N/A') }}</td>
                                         <td><span class="badge badge-type">{{ channel.type|default('N/A') }}</span></td>
-                                        <td>{{ ch_translation.name|default('N/A') }}</td>
-                                        <td>{{ ch_translation.additional_label_info|default('') }}</td>
+                                        {% if channel.translations is defined and channel.translations[language] is defined %}
+                                            <td>{{ channel.translations[language].name|default('N/A') }}</td>
+                                            <td>{{ channel.translations[language].description|default('') }}</td>
+                                            <td>{{ channel.translations[language].additional_info_label|default('') }}</td>
+                                        {% else %}
+                                            <td colspan="3" class="missing-translation-cell">
+                                                <div class="missing-translation-notice">
+                                                    <span class="badge badge-warning">{{ language }}</span>
+                                                    <span class="missing-translation-text">Brak tłumaczeń dla tego języka</span>
+                                                    <button class="btn btn-sm btn-outline-primary add-translation-btn"
+                                                            data-channel-id="{{ channel.channel_id }}"
+                                                            data-locale="{{ language }}">
+                                                        <i class="fa fa-plus"></i> Dodaj tłumaczenie
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        {% endif %}
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary channel-edit-btn" data-channel-id="{{ channel.channel_id }}">
                                                 <i class="fa fa-edit"></i> Edit
@@ -131,12 +146,50 @@
                     <input type="text" id="channel-name" name="name" required>
                 </div>
                 <div class="form-group">
-                    <label for="channel-description">Additiona label info</label>
+                    <label for="channel-description">Description</label>
                     <textarea id="channel-description" name="description" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="channel-additional-info-label">Additional Info Label</label>
+                    <textarea id="channel-additional-info-label" name="additional_info_label" rows="2"></textarea>
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Create Channel</button>
                     <button type="button" class="btn btn-outline-primary cancel-create-channel">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for editing channel -->
+    <div id="edit-channel-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-edit-channel">&times;</span>
+            <h2>Edit Payment Channel</h2>
+            <form id="edit-channel-form">
+                <div class="form-group">
+                    <label for="edit-application-channel-id">Application Channel ID</label>
+                    <input type="text" id="edit-application-channel-id" name="application_channel_id" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-channel-type">Type</label>
+                    <input type="text" id="edit-channel-type" name="type">
+                </div>
+                <div class="form-group">
+                    <label for="edit-channel-name">Name</label>
+                    <input type="text" id="edit-channel-name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-channel-description">Description</label>
+                    <textarea id="edit-channel-description" name="description" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="edit-channel-additional-info-label">Additional Info Label</label>
+                    <textarea id="edit-channel-additional-info-label" name="additional_info_label" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Update Channel</button>
+                    <button type="button" class="btn btn-outline-primary cancel-edit-channel">Cancel</button>
                 </div>
             </form>
         </div>
