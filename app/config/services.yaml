@@ -13,3 +13,29 @@ services:
     App\Security\HashValidator:
         arguments:
             $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
+    App\Factory\ShopFactory:
+        arguments:
+            $logger: '@monolog.logger'
+    App\MessageHandler\CreateExternalPaymentHandler:
+        arguments:
+            $logger: '@monolog.logger'
+    App\Service\Persistence\ShopPersistenceService:
+        arguments:
+            $logger: '@monolog.logger'
+    App\Service\AppStoreEventProcessor:
+        arguments:
+            $logger: '@monolog.logger'
+    App\Service\OAuth\Authentication\AuthenticationService:
+        arguments:
+            $logger: '@monolog.logger'
+
+    # Registration of external services
+    DreamCommerce\Component\Common\Http\GuzzleClient:
+
+    DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient:
+
+    DreamCommerce\Component\ShopAppstore\Model\Application:
+        arguments:
+            $appId: '%env(APP_CLIENT)%'
+            $appSecret: '%env(APP_SECRET)%'
+            $appstoreSecret: '%env(APPSTORE_APP_SECRET)%'

@@ -2,12 +2,10 @@
 
 namespace App\Controller;
 
-use App\Security\HashValidator;
 use App\Service\AppStoreEventProcessor;
 use App\Service\Event\AppStoreLifecycleAction;
 use App\Service\Event\AppStoreLifecycleEvent;
 use App\Service\Event\AppStoreLifecycleTrial;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;

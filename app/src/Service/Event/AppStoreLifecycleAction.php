@@ -6,4 +6,5 @@ enum AppStoreLifecycleAction: string
 {
     case INSTALL = 'install';
     case UNINSTALL = 'uninstall';
+    case UPGRADE = 'upgrade';
 }
