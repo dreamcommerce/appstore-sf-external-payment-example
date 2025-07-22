@@ -62,8 +62,7 @@ class AppStoreEventProcessor
                     'shop_id' => $event->shopId,
                     'shop_url' => $event->shopUrl,
                     'version' => $event->version,
-                    'error_message' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'error_message' => $e->getMessage()
                 ]);
             }
         }

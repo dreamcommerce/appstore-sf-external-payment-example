@@ -68,14 +68,13 @@ class ShopFactory implements ShopFactoryInterface
         $OAuthShop = $this->createOAuthShop($shopFromDb);
 
         $tokenEntity = $shopAppInstallation->getActiveToken();
-        $tokenData = null;
-        if ($tokenEntity) {
-            $tokenData = [
-                'access_token' => $tokenEntity->getAccessToken(),
-                'refresh_token' => $tokenEntity->getRefreshToken(),
-                'expires_at' => $tokenEntity->getExpiresAt()?->format('Y-m-d H:i:s'),
-            ];
-        }
+        $tokenData = [
+            'access_token' => $tokenEntity->getAccessToken(),
+            'refresh_token' => $tokenEntity->getRefreshToken(),
+            'expires_at' => $tokenEntity->getExpiresAt()?->format(
+                'Y-m-d H:i:s',
+            ),
+        ];
 
         $this->applyTokenToOAuthShop($OAuthShop, $tokenData, $shopId, $shopFromDb->getShopUrl());
 

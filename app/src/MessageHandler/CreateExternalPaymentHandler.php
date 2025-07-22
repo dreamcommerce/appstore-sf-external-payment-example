@@ -22,7 +22,7 @@ class CreateExternalPaymentHandler
         $this->oauthService = $oauthService;
     }
 
-    public function __invoke(CreateExternalPaymentMessage $message): bool
+    public function __invoke(CreateExternalPaymentMessage $message): void
     {
         $shopModel = new Shop(
             $message->getShopCode(),
@@ -54,8 +54,6 @@ class CreateExternalPaymentHandler
                 'payment_name' => $message->getName(),
                 'payment_id' => $result->getExternalId(),
             ]);
-
-            return true;
         } catch (ApiException $e) {
             $this->logger->error('Error creating payment', [
                 'shop_code' => $message->getShopCode(),
@@ -63,8 +61,6 @@ class CreateExternalPaymentHandler
                 'error_code' => $e->getCode(),
                 'trace' => $e->getTraceAsString()
             ]);
-
-            return false;
         }
     }
 }

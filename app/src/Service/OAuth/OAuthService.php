@@ -52,7 +52,8 @@ class OAuthService
      * Updates application version for existing shop
      *
      * @param AppStoreLifecycleEvent $event Event containing shop data and version information
-     * @throws \Exception on error
+     * @throws \RuntimeException when shop is not found
+     * @throws \Exception on other errors
      */
     public function updateApplicationVersion(AppStoreLifecycleEvent $event): void
     {

@@ -97,23 +97,11 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
             $this->logger->warning('Cannot update application version: Shop not found', [
                 'shop_id' => $shopId
             ]);
-            return;
+            throw new \RuntimeException(sprintf('Cannot update application version: Shop not found for shop_id: %s', $shopId));
         }
 
-        try {
-            /** @var ShopAppInstallation $shopAppInstallation  */
-            $shopAppInstallation->setApplicationVersion($shop->getVersion() ?? $OAuthShop->getVersion() ?? 1);
-            $this->shopAppInstallationRepository->save($shopAppInstallation);
-
-            $this->logger->info('Shop application version updated successfully', [
-                'shop_id' => $shopId,
-                'version' => $shopAppInstallation->getApplicationVersion()
-            ]);
-        } catch (\Throwable $exception) {
-            $this->logger->error('Error while updating application version', [
-                'shop_id' => $shopId,
-                'error' => $exception->getMessage()
-            ]);
-        }
+        /** @var ShopAppInstallation $shopAppInstallation  */
+        $shopAppInstallation->setApplicationVersion($shop->getVersion() ?? $OAuthShop->getVersion() ?? 1);
+        $this->shopAppInstallationRepository->save($shopAppInstallation);
     }
 }
