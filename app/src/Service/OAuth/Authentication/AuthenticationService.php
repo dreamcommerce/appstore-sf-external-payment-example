@@ -48,7 +48,8 @@ class AuthenticationService implements AuthenticationServiceInterface
             $authenticator->authenticate($shop);
             
             $this->logger->info('OAuth authentication successful', [
-                'shop' => $shop->getId()
+                'shop' => $shop->getId(),
+                'scopes' => $shop->getToken()->getScopes(),
             ]);
         } catch (\Exception $e) {
             $this->logger->error('OAuth authentication failed', [
@@ -74,6 +75,7 @@ class AuthenticationService implements AuthenticationServiceInterface
         if ($shop->isAuthenticated()) {
             $this->logger->info('Already authenticated successful', [
                 'shop_id' => $shop->getId(),
+                'scopes' => $shop->getToken()->getScopes(),
             ]);
             return;
         }

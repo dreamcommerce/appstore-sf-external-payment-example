@@ -3,8 +3,9 @@ framework:
         transports:
             async: '%env(MESSENGER_TRANSPORT_DSN)%'
         routing:
-            'App\Message\CreateExternalPaymentMessage': async
+            'App\Message\CreatePaymentMessage': async
+            'App\Message\DeletePaymentMessage': async
+            'App\Message\UpdatePaymentMessage': async
         default_bus: messenger.bus.default
         buses:
             messenger.bus.default: ~
-

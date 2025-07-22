@@ -16,9 +16,6 @@ services:
     App\Factory\ShopFactory:
         arguments:
             $logger: '@monolog.logger'
-    App\MessageHandler\CreateExternalPaymentHandler:
-        arguments:
-            $logger: '@monolog.logger'
     App\Service\Persistence\ShopPersistenceService:
         arguments:
             $logger: '@monolog.logger'

@@ -39,6 +39,8 @@ The application handles lifecycle events:
 
 - `/app-store/view/hello-world` – main application interface loaded in the Shoper admin panel iframe
 - `/app-store/event` – endpoint for handling installation/uninstallation events (AppStore webhooks)
+- `/app-store/view/payments-configuration` – payment configuration list view for all created payments from current application
+- `/app-store/view/payment-details` – endpoint for viewing details of a specific payment in their own iframe
 
 ## Extending
 
@@ -140,3 +142,31 @@ ngrok http 8080
 
 After running ngrok, you will get a public HTTPS URL (e.g. `https://abc123.ngrok.io`).  
 Use this URL in Shoper AppTools as your app's endpoint.
+
+## Building frontend assets
+
+This project uses a simple asset pipeline based on Node.js and Less for building CSS and copying JS files.
+
+### Requirements
+- Node.js (>=14)
+- npm (>=6) or yarn
+
+### Installation
+
+Install JS dependencies:
+
+```bash
+npm install
+```
+
+Build assets (CSS and JS):
+
+```bash
+npm run assets:build
+```
+
+This will:
+- Compile `assets/styles/payments-configuration.less` to `public/assets/payments-configuration.css`
+- Copy all JS files from `assets/js/` to `public/assets/`
+
+You should run this command after any change in frontend assets.
