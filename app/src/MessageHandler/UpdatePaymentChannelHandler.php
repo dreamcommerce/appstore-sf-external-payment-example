@@ -19,7 +19,7 @@ class UpdatePaymentChannelHandler
         $this->paymentChannelService = $paymentChannelService;
     }
 
-    public function __invoke(UpdatePaymentChannelMessage $message): bool
+    public function __invoke(UpdatePaymentChannelMessage $message): void
     {
         $this->logger->info('Handling UpdatePaymentChannelMessage', [
             'shop_code' => $message->getShopCode(),
@@ -27,8 +27,7 @@ class UpdatePaymentChannelHandler
             'payment_id' => $message->getPaymentId()
         ]);
 
-        // ValueObject jest już dostępny w wiadomości, nie trzeba go tworzyć
-        return $this->paymentChannelService->updateChannel(
+        $this->paymentChannelService->updateChannel(
             $message->getShopCode(),
             $message->getPaymentId(),
             $message->getChannelData()

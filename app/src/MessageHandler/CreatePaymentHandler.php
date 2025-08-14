@@ -19,7 +19,7 @@ class CreatePaymentHandler
         $this->paymentService = $paymentService;
     }
 
-    public function __invoke(CreatePaymentMessage $message): bool
+    public function __invoke(CreatePaymentMessage $message): void
     {
         $paymentData = $message->getPaymentData();
         $this->logger->info('Handling CreatePaymentMessage', [
@@ -28,7 +28,7 @@ class CreatePaymentHandler
             'title' => $paymentData->getTitle()
         ]);
         
-        return $this->paymentService->createPayment(
+        $this->paymentService->createPayment(
             $message->getShopCode(),
             $paymentData->getName(),
             $paymentData->getTitle($paymentData->getLocale()),

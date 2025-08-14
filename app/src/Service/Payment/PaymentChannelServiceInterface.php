@@ -18,9 +18,8 @@ interface PaymentChannelServiceInterface
      * @param int $paymentId
      * @param ChannelData $channelData
      * @param string $locale
-     * @return bool
      */
-    public function createChannel(string $shopCode, int $paymentId, ChannelData $channelData, string $locale): bool;
+    public function createChannel(string $shopCode, int $paymentId, ChannelData $channelData, string $locale): void;
 
     /**
      * @param string $shopCode
@@ -35,15 +34,13 @@ interface PaymentChannelServiceInterface
      * @param string $shopCode
      * @param int $paymentId
      * @param ChannelData $channelData
-     * @return bool
      */
-    public function updateChannel(string $shopCode, int $paymentId, ChannelData $channelData): bool;
+    public function updateChannel(string $shopCode, int $paymentId, ChannelData $channelData): void;
 
     /**
      * @param string $shopCode
      * @param int $channelId
      * @param int $paymentId
-     * @return bool
      */
-    public function deleteChannel(string $shopCode, int $channelId, int $paymentId): bool;
+    public function deleteChannel(string $shopCode, int $channelId, int $paymentId): void;
 }

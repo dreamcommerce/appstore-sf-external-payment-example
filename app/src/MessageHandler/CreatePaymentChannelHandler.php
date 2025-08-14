@@ -19,7 +19,7 @@ class CreatePaymentChannelHandler
         $this->paymentChannelService = $paymentChannelService;
     }
 
-    public function __invoke(CreatePaymentChannelMessage $message): bool
+    public function __invoke(CreatePaymentChannelMessage $message): void
     {
         $this->logger->info('Handling CreatePaymentChannelMessage', [
             'shop_code' => $message->getShopCode(),
@@ -27,8 +27,7 @@ class CreatePaymentChannelHandler
             'locale' => $message->getLocale()
         ]);
 
-        // ValueObject jest już dostępny w wiadomości, nie trzeba go tworzyć
-        return $this->paymentChannelService->createChannel(
+        $this->paymentChannelService->createChannel(
             $message->getShopCode(),
             $message->getPaymentId(),
             $message->getChannelData(),

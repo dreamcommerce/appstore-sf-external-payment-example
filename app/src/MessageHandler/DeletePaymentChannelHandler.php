@@ -19,7 +19,7 @@ class DeletePaymentChannelHandler
         $this->paymentChannelService = $paymentChannelService;
     }
 
-    public function __invoke(DeletePaymentChannelMessage $message): bool
+    public function __invoke(DeletePaymentChannelMessage $message): void
     {
         $this->logger->info('Handling DeletePaymentChannelMessage', [
             'shop_code' => $message->getShopCode(),
@@ -27,7 +27,7 @@ class DeletePaymentChannelHandler
             'payment_id' => $message->getPaymentId()
         ]);
 
-        return $this->paymentChannelService->deleteChannel(
+        $this->paymentChannelService->deleteChannel(
             $message->getShopCode(),
             $message->getChannelId(),
             $message->getPaymentId()

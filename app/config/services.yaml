@@ -36,3 +36,6 @@ services:
             $appId: '%env(APP_CLIENT)%'
             $appSecret: '%env(APP_SECRET)%'
             $appstoreSecret: '%env(APPSTORE_APP_SECRET)%'
+
+    App\Messenger\Middleware\ApiExceptionMiddleware:
+        tags: [{ name: 'messenger.bus_middleware', bus: 'messenger.bus.default', priority: 100 }]

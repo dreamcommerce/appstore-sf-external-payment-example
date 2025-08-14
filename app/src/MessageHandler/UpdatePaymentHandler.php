@@ -19,7 +19,7 @@ class UpdatePaymentHandler
         $this->paymentService = $paymentService;
     }
 
-    public function __invoke(UpdatePaymentMessage $message): bool
+    public function __invoke(UpdatePaymentMessage $message): void
     {
         $paymentData = $message->getPaymentData();
 
@@ -29,7 +29,7 @@ class UpdatePaymentHandler
             'data' => $paymentData->toArray()
         ]);
         
-        return $this->paymentService->updatePayment(
+        $this->paymentService->updatePayment(
             $message->getShopCode(),
             $message->getPaymentId(),
             $paymentData->toArray()

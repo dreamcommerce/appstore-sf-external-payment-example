@@ -19,14 +19,14 @@ class DeletePaymentHandler
         $this->paymentService = $paymentService;
     }
 
-    public function __invoke(DeletePaymentMessage $message): bool
+    public function __invoke(DeletePaymentMessage $message): void
     {
         $this->logger->info('Handling DeletePaymentMessage', [
             'shop_code' => $message->getShopCode(),
             'payment_id' => $message->getPaymentId()
         ]);
         
-        return $this->paymentService->deletePayment(
+        $this->paymentService->deletePayment(
             $message->getShopCode(),
             $message->getPaymentId()
         );

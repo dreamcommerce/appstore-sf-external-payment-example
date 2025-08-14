@@ -1,11 +1,30 @@
 framework:
     messenger:
+        serializer:
+            default_serializer: App\Messenger\Serializer\ExceptionContextMinimalSerializer
+            symfony_serializer:
+                format: json
+                context: { }
+
         transports:
-            async: '%env(MESSENGER_TRANSPORT_DSN)%'
+            async:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+                serializer: App\Messenger\Serializer\ExceptionContextMinimalSerializer
+                options:
+                    queue_name: async
+                    auto_setup: true
+            failed:
+                dsn: 'doctrine://default?queue_name=failed'
+                serializer: App\Messenger\Serializer\ExceptionContextMinimalSerializer
+
         routing:
             'App\Message\CreatePaymentMessage': async
             'App\Message\DeletePaymentMessage': async
             'App\Message\UpdatePaymentMessage': async
         default_bus: messenger.bus.default
-        buses:
-            messenger.bus.default: ~
+
+        failure_transport: failed
