@@ -50,21 +50,10 @@ class ShopPaymentsConfigurationController extends AbstractController
             'payment_id' => $paymentId,
         ]);
 
-        try {
-            $message = new DeletePaymentMessage($shopContext->shop, (string)$paymentId);
-            $this->messageBus->dispatch($message);
+        $message = new DeletePaymentMessage($shopContext->shop, (string)$paymentId);
+        $this->messageBus->dispatch($message);
 
-            return $this->json(['success' => true, 'message' => 'Delete request accepted for processing.']);
-        } catch (\Exception $e) {
-            $this->logger->error('Controller error during payment delete', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString(),
-                'shop' => $shopContext->shop,
-            ]);
-            return $this->json(['success' => false, 'error' => 'Error while deleting payment'], 500);
-        }
+        return $this->json(null, Response::HTTP_ACCEPTED);
     }
 
     #[Route('/app-store/view/payments-configuration/edit', name: 'payments_configuration_edit', methods: ['POST'])]
@@ -73,7 +62,7 @@ class ShopPaymentsConfigurationController extends AbstractController
         #[MapRequestPayload(validationGroups: ['edit'])] PaymentDto $paymentDto
     ): Response {
         $updateData = [
-            'currencies' => $paymentDto->currencies,
+            'currencies' => $paymentDto->currencies ?? [],
             'visible' => $paymentDto->visible,
             'active' => $paymentDto->active,
             'translations' => [
@@ -85,26 +74,15 @@ class ShopPaymentsConfigurationController extends AbstractController
             ]
         ];
 
-        try {
-            $paymentData = PaymentData::createForUpdate($updateData, $shopContext->translations);
-            $message = new UpdatePaymentMessage(
-                $shopContext->shop,
-                (string)$paymentDto->payment_id,
-                $paymentData
-            );
-            $this->messageBus->dispatch($message);
+        $paymentData = PaymentData::createForUpdate($updateData, $shopContext->translations);
+        $message = new UpdatePaymentMessage(
+            $shopContext->shop,
+            (string)$paymentDto->payment_id,
+            $paymentData
+        );
+        $this->messageBus->dispatch($message);
 
-            return $this->json(['success' => true, 'message' => 'Payment update request accepted for processing.']);
-        } catch (\Exception $e) {
-            $this->logger->error('Controller error during payment update', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString(),
-                'shop' => $shopContext->shop,
-            ]);
-            return $this->json(['success' => false, 'error' => 'Error while updating payment'], 500);
-        }
+        return $this->json(null, Response::HTTP_ACCEPTED);
     }
 
     #[Route('/app-store/view/payments-configuration/create', name: 'payments_configuration_create', methods: ['POST'])]
@@ -121,30 +99,19 @@ class ShopPaymentsConfigurationController extends AbstractController
             'locale' => $locale
         ]);
 
-        try {
-            $paymentData = PaymentData::createForNewPayment(
-                $paymentDto->title,
-                $paymentDto->description ?? '',
-                $paymentDto->active,
-                $locale,
-                null,
-                null,
-                $paymentDto->currencies
-            );
+        $paymentData = PaymentData::createForNewPayment(
+            $paymentDto->title,
+            $paymentDto->description ?? '',
+            $paymentDto->active,
+            $locale,
+            null,
+            null,
+            $paymentDto->currencies ?? []
+        );
 
-            $message = new CreatePaymentMessage($shopContext->shop, $paymentData);
-            $this->messageBus->dispatch($message);
+        $message = new CreatePaymentMessage($shopContext->shop, $paymentData);
+        $this->messageBus->dispatch($message);
 
-            return $this->json(['success' => true, 'message' => 'Create request accepted for processing.']);
-        } catch (\Exception $e) {
-            $this->logger->error('Controller error during payment creation', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'trace' => $e->getTraceAsString(),
-                'shop' => $shopContext->shop,
-            ]);
-            return $this->json(['success' => false, 'error' => 'Error while creating payment'], 500);
-        }
+        return $this->json(null, Response::HTTP_ACCEPTED);
     }
 }

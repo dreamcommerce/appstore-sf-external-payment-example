@@ -49,32 +49,28 @@ class PaymentDetailsController extends AbstractController
         #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
         #[MapRequestPayload(validationGroups: ['create'])] ChannelDto $channelDto
     ): Response {
-        try {
-            $channelData = new ChannelData(
-                0, // ID of the channel will be assigned by the API
-                $channelDto->application_channel_id,
-                $channelDto->type,
-                [
-                    $context->translations => ChannelData::createTranslation(
-                        $channelDto->name,
-                        $channelDto->description,
-                        $channelDto->additional_info_label
-                    )
-                ]
-            );
+        $channelData = new ChannelData(
+            0, // ID of the channel will be assigned by the API
+            $channelDto->application_channel_id,
+            $channelDto->type,
+            [
+                $context->translations => ChannelData::createTranslation(
+                    $channelDto->name,
+                    $channelDto->description ?? '',
+                    $channelDto->additional_info_label ?? ''
+                )
+            ]
+        );
 
-            $message = new CreatePaymentChannelMessage(
-                $context->shop,
-                $context->id,
-                $channelData,
-                $context->translations
-            );
-            $this->messageBus->dispatch($message);
+        $message = new CreatePaymentChannelMessage(
+            $context->shop,
+            $context->id,
+            $channelData,
+            $context->translations
+        );
+        $this->messageBus->dispatch($message);
 
-            return $this->json(['success' => true]);
-        } catch (\Throwable $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
-        }
+        return $this->json(null, Response::HTTP_ACCEPTED);
     }
 
     #[Route('/app-store/view/payment-details/get-channel/{channelId<\d+>}', name: 'payment_details_get_channel', methods: ['GET'], requirements: ['channelId' => '\d+'])]
@@ -82,22 +78,18 @@ class PaymentDetailsController extends AbstractController
         #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
         int $channelId
     ): Response {
-        try {
-            $channelData = $this->paymentChannelService->getChannel(
-                $context->shop,
-                $channelId,
-                $context->id,
-                $context->translations
-            );
+        $channelData = $this->paymentChannelService->getChannel(
+            $context->shop,
+            $channelId,
+            $context->id,
+            $context->translations
+        );
 
-            if (!$channelData) {
-                return $this->json(['success' => false, 'error' => 'Channel not found'], 404);
-            }
-
-            return $this->json(['success' => true, 'channel' => $channelData->toArray()]);
-        } catch (\Throwable $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
+        if (!$channelData) {
+            return $this->json(null, Response::HTTP_NOT_FOUND);
         }
+
+        return $this->json($channelData, Response::HTTP_OK);
     }
 
     #[Route('/app-store/view/payment-details/update-channel/{channelId<\d+>}', name: 'payment_details_update_channel', methods: ['PUT'], requirements: ['channelId' => '\d+'])]
@@ -106,31 +98,27 @@ class PaymentDetailsController extends AbstractController
         #[MapRequestPayload(validationGroups: ['update'])] ChannelDto $channelDto,
         int $channelId
     ): Response {
-        try {
-            $channelData = new ChannelData(
-                $channelId,
-                $channelDto->application_channel_id,
-                $channelDto->type,
-                [
-                    $context->translations => ChannelData::createTranslation(
-                        $channelDto->name,
-                        $channelDto->description,
-                        $channelDto->additional_info_label
-                    )
-                ]
-            );
+        $channelData = new ChannelData(
+            $channelId,
+            $channelDto->application_channel_id,
+            $channelDto->type,
+            [
+                $context->translations => ChannelData::createTranslation(
+                    $channelDto->name,
+                    $channelDto->description ?? '',
+                    $channelDto->additional_info_label ?? ''
+                )
+            ]
+        );
 
-            $message = new UpdatePaymentChannelMessage(
-                $context->shop,
-                $context->id,
-                $channelData
-            );
-            $this->messageBus->dispatch($message);
+        $message = new UpdatePaymentChannelMessage(
+            $context->shop,
+            $context->id,
+            $channelData
+        );
+        $this->messageBus->dispatch($message);
 
-            return $this->json(['success' => true]);
-        } catch (\Throwable $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
-        }
+        return $this->json(null, Response::HTTP_ACCEPTED);
     }
 
     #[Route('/app-store/view/payment-details/delete-channel/{channelId<\d+>}', name: 'payment_details_delete_channel', methods: ['DELETE'], requirements: ['channelId' => '\d+'])]
@@ -138,17 +126,13 @@ class PaymentDetailsController extends AbstractController
         #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
         int $channelId
     ): Response {
-        try {
-            $message = new DeletePaymentChannelMessage(
-                $context->shop,
-                $channelId,
-                $context->id
-            );
-            $this->messageBus->dispatch($message);
+        $message = new DeletePaymentChannelMessage(
+            $context->shop,
+            $channelId,
+            $context->id
+        );
+        $this->messageBus->dispatch($message);
 
-            return $this->json(['success' => true]);
-        } catch (\Throwable $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
-        }
+        return $this->json(null, Response::HTTP_ACCEPTED);
     }
 }
