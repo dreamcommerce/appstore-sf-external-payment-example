@@ -14,18 +14,15 @@ class PaymentService implements PaymentServiceInterface
 {
     private LoggerInterface $logger;
     private CurrencyHelper $currencyHelper;
-    private PaymentMapper $paymentMapper;
     private ShopContextService $shopContextService;
 
     public function __construct(
         LoggerInterface $logger,
         CurrencyHelper $currencyHelper,
-        PaymentMapper $paymentMapper,
         ShopContextService $shopContextService
     ) {
         $this->logger = $logger;
         $this->currencyHelper = $currencyHelper;
-        $this->paymentMapper = $paymentMapper;
         $this->shopContextService = $shopContextService;
     }
 
@@ -119,7 +116,17 @@ class PaymentService implements PaymentServiceInterface
             foreach ($itemList as $payment) {
                 $paymentData = $payment->getData();
                 if ($this->hasTranslationForLocale($paymentData, $locale)) {
-                    $payments[] = $this->paymentMapper->mapFromApi($paymentData, $locale);
+                    $translation = $paymentData['translations'][$locale];
+                    $payments[] = new \App\Dto\PaymentDto(
+                        (int)($paymentData['payment_id'] ?? 0),
+                        (string)($paymentData['name'] ?? ''),
+                        (bool)($paymentData['visible'] ?? false),
+                        (bool)($translation['active'] ?? false),
+                        (array)($paymentData['currencies'] ?? []),
+                        (string)($translation['title'] ?? ''),
+                        (string)($translation['description'] ?? ''),
+                        $locale
+                    );
                 }
             }
 

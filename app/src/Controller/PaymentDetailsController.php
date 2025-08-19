@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Dto\ChannelDto;
+use App\Dto\PaymentDetailsContextDto;
 use App\Message\CreatePaymentChannelMessage;
 use App\Message\DeletePaymentChannelMessage;
 use App\Message\UpdatePaymentChannelMessage;
@@ -9,75 +11,63 @@ use App\Service\Payment\PaymentChannelServiceInterface;
 use App\Service\Payment\PaymentServiceInterface;
 use App\ValueObject\ChannelData;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 class PaymentDetailsController extends AbstractController
 {
-    private PaymentServiceInterface $paymentService;
-    private PaymentChannelServiceInterface $paymentChannelService;
-    private MessageBusInterface $messageBus;
-
     public function __construct(
-        PaymentServiceInterface $paymentService,
-        PaymentChannelServiceInterface $paymentChannelService,
-        MessageBusInterface $messageBus
+        private readonly PaymentServiceInterface $paymentService,
+        private readonly PaymentChannelServiceInterface $paymentChannelService,
+        private readonly MessageBusInterface $messageBus
     ) {
-        $this->paymentService = $paymentService;
-        $this->paymentChannelService = $paymentChannelService;
-        $this->messageBus = $messageBus;
     }
 
     #[Route('/app-store/view/payment-details', name: 'payment_details', methods: ['GET'])]
-    public function paymentDetailsAction(Request $request): Response
-    {
-        $paymentId = $request->query->get('id');
-        $shopCode = $request->query->get('shop');
-        $language = $request->query->get('translations', 'pl_PL');
+    public function paymentDetailsAction(
+        #[MapQueryString(validationGroups: ['details'])] PaymentDetailsContextDto $context
+    ): Response {
         $channels = [];
 
-        if ($shopCode && $paymentId) {
-            $payment = $this->paymentService->getPaymentById($shopCode, $paymentId, $language);
-            $channels = $this->paymentChannelService->getChannelsForPayment($shopCode, $paymentId);
+        if ($context->id) {
+            $payment = $this->paymentService->getPaymentById($context->shop, $context->id, $context->translations);
+            $channels = $this->paymentChannelService->getChannelsForPayment($context->shop, $context->id);
         }
+
         return $this->render('payment-details.twig', [
             'payment' => $payment ?? null,
-            'language' => $language,
+            'language' => $context->translations,
             'channels' => $channels
         ]);
     }
 
     #[Route('/app-store/view/payment-details/create-channel', name: 'payment_details_create_channel', methods: ['POST'])]
-    public function createChannelAction(Request $request): Response
-    {
-        $shopCode = $request->query->get('shop');
-        $paymentId = $request->query->get('id');
-        $language = $request->query->get('translations', 'pl_PL');
-        $data = json_decode($request->getContent(), true);
-        if (!$shopCode || !$paymentId || !$data) {
-            return $this->json(['success' => false, 'error' => 'Missing required data'], 400);
-        }
+    public function createChannelAction(
+        #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
+        #[MapRequestPayload(validationGroups: ['create'])] ChannelDto $channelDto
+    ): Response {
         try {
             $channelData = new ChannelData(
                 0, // ID of the channel will be assigned by the API
-                $data['application_channel_id'] ?? '',
-                !empty($data['type']) ? $data['type'] : null,
+                $channelDto->application_channel_id,
+                $channelDto->type,
                 [
-                    $language => ChannelData::createTranslation(
-                        $data['name'] ?? '',
-                        $data['description'] ?? '',
-                        $data['additional_info_label'] ?? ''
+                    $context->translations => ChannelData::createTranslation(
+                        $channelDto->name,
+                        $channelDto->description,
+                        $channelDto->additional_info_label
                     )
                 ]
             );
 
             $message = new CreatePaymentChannelMessage(
-                $shopCode,
-                (int)$paymentId,
+                $context->shop,
+                $context->id,
                 $channelData,
-                $language
+                $context->translations
             );
             $this->messageBus->dispatch($message);
 
@@ -87,21 +77,17 @@ class PaymentDetailsController extends AbstractController
         }
     }
 
-    #[Route('/app-store/view/payment-details/get-channel/{channelId}', name: 'payment_details_get_channel', methods: ['GET'])]
-    public function getChannelAction(Request $request, int $channelId): Response
-    {
-        $shopCode = $request->query->get('shop');
-        $paymentId = $request->query->get('id');
-        $language = $request->query->get('translations', 'pl_PL');
-        if (!$shopCode || !$channelId || !$paymentId) {
-            return $this->json(['success' => false, 'error' => 'Missing required data (shop, channelId or paymentId)'], 400);
-        }
+    #[Route('/app-store/view/payment-details/get-channel/{channelId<\d+>}', name: 'payment_details_get_channel', methods: ['GET'], requirements: ['channelId' => '\d+'])]
+    public function getChannelAction(
+        #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
+        int $channelId
+    ): Response {
         try {
             $channelData = $this->paymentChannelService->getChannel(
-                $shopCode,
+                $context->shop,
                 $channelId,
-                (int)$paymentId,
-                $language
+                $context->id,
+                $context->translations
             );
 
             if (!$channelData) {
@@ -114,33 +100,29 @@ class PaymentDetailsController extends AbstractController
         }
     }
 
-    #[Route('/app-store/view/payment-details/update-channel/{channelId}', name: 'payment_details_update_channel', methods: ['PUT'])]
-    public function updateChannelAction(Request $request, int $channelId): Response
-    {
-        $shopCode = $request->query->get('shop');
-        $paymentId = $request->query->get('id');
-        $language = $request->query->get('translations', 'pl_PL');
-        $data = json_decode($request->getContent(), true);
-        if (!$shopCode || !$channelId || !$paymentId || !$data) {
-            return $this->json(['success' => false, 'error' => 'Missing required data (shop, channelId or paymentId)'], 400);
-        }
+    #[Route('/app-store/view/payment-details/update-channel/{channelId<\d+>}', name: 'payment_details_update_channel', methods: ['PUT'], requirements: ['channelId' => '\d+'])]
+    public function updateChannelAction(
+        #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
+        #[MapRequestPayload(validationGroups: ['update'])] ChannelDto $channelDto,
+        int $channelId
+    ): Response {
         try {
             $channelData = new ChannelData(
                 $channelId,
-                $data['application_channel_id'] ?? '',
-                !empty($data['type']) ? $data['type'] : null,
+                $channelDto->application_channel_id,
+                $channelDto->type,
                 [
-                    $language => ChannelData::createTranslation(
-                        $data['name'] ?? '',
-                        $data['description'] ?? '',
-                        $data['additional_info_label'] ?? ''
+                    $context->translations => ChannelData::createTranslation(
+                        $channelDto->name,
+                        $channelDto->description,
+                        $channelDto->additional_info_label
                     )
                 ]
             );
 
             $message = new UpdatePaymentChannelMessage(
-                $shopCode,
-                (int)$paymentId,
+                $context->shop,
+                $context->id,
                 $channelData
             );
             $this->messageBus->dispatch($message);
@@ -151,19 +133,16 @@ class PaymentDetailsController extends AbstractController
         }
     }
 
-    #[Route('/app-store/view/payment-details/delete-channel/{channelId}', name: 'payment_details_delete_channel', methods: ['DELETE'])]
-    public function deleteChannelAction(Request $request, int $channelId): Response
-    {
-        $shopCode = $request->query->get('shop');
-        $paymentId = $request->query->get('id');
-        if (!$shopCode || !$channelId || !$paymentId) {
-            return $this->json(['success' => false, 'error' => 'Missing required data (shop, channelId or paymentId)'], 400);
-        }
+    #[Route('/app-store/view/payment-details/delete-channel/{channelId<\d+>}', name: 'payment_details_delete_channel', methods: ['DELETE'], requirements: ['channelId' => '\d+'])]
+    public function deleteChannelAction(
+        #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
+        int $channelId
+    ): Response {
         try {
             $message = new DeletePaymentChannelMessage(
-                $shopCode,
+                $context->shop,
                 $channelId,
-                (int)$paymentId
+                $context->id
             );
             $this->messageBus->dispatch($message);
 

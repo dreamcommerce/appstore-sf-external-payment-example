@@ -8,11 +8,9 @@ use App\Messenger\Middleware\ApiExceptionMiddleware;
 use App\Service\Exception\ApiExceptionClassifier;
 use DreamCommerce\Component\ShopAppstore\Api\Exception\ApiException;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
-use Symfony\Component\Messenger\Exception\HandlerFailedException;
 use Symfony\Component\Messenger\Middleware\StackMiddleware;
 
 class ApiExceptionMiddlewareIntegrationTest extends TestCase

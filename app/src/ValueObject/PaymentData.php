@@ -28,11 +28,11 @@ class PaymentData
         string $title,
         string $description = null,
         bool $active = true,
-        array $currencies = [1],
-        array $supportedCurrencies = ['PLN'],
         string $locale = 'pl_PL',
         string $notify = null,
-        string $notifyMail = null
+        string $notifyMail = null,
+        array $currencies = [1],
+        array $supportedCurrencies = ['PLN']
     ): self {
         $translations = [
             $locale => [
