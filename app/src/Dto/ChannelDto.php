@@ -8,13 +8,13 @@ class ChannelDto
 {
     public function __construct(
         #[Assert\NotBlank(message: "Application channel ID is required", groups: ["create", "update"])]
-        public readonly ?string $application_channel_id = '',
+        public readonly ?string $application_channel_id = null,
         public readonly ?string $type = null,
 
         #[Assert\NotBlank(message: "Name is required", groups: ["create", "update"])]
-        public readonly ?string $name = '',
-        public readonly ?string $description = '',
-        public readonly ?string $additional_info_label = ''
+        public readonly ?string $name = null,
+        public readonly ?string $description = null,
+        public readonly ?string $additional_info_label = null
     ) {
     }
 }

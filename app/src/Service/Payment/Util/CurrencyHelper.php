@@ -37,4 +37,42 @@ class CurrencyHelper
         }
         return $currencies;
     }
+
+    public function getAllCurrencies(ShopClient $shopClient, OAuthShop $oauthShop): array
+    {
+        try {
+            $currencyResource = new CurrencyResource($shopClient);
+            $result = $currencyResource->findAll($oauthShop);
+
+            $currencies = [];
+            foreach ($result as $currencyItem) {
+                $currencies[] = $currencyItem->getData();
+            }
+
+            return $currencies;
+        } catch (\Throwable $e) {
+            $this->logger->warning('Failed to fetch all currencies', [
+                'exception' => $e->getMessage()
+            ]);
+            return [];
+        }
+    }
+
+    public function mapCurrencyIdsToSupportedCurrencies(ShopClient $shopClient, OAuthShop $oauthShop, array $currencyIds): array
+    {
+        if (empty($currencyIds)) {
+            return [];
+        }
+
+        $supportedCurrencies = [];
+        $currenciesDetails = $this->getCurrenciesDetails($shopClient, $oauthShop, $currencyIds);
+
+        foreach ($currenciesDetails as $currency) {
+            if (isset($currency['name'])) {
+                $supportedCurrencies[] = $currency['name'];
+            }
+        }
+
+        return $supportedCurrencies;
+    }
 }

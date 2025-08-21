@@ -7,9 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return decodeURI(results[1]) || 0;
     }
 
-    var shopCode = getUrlParam('shop');
     var locale = getUrlParam('translations') || 'pl_PL';
-
     document.getElementById('create-payment-locale').value = locale;
 
     document.getElementById('create-payment-btn').addEventListener('click', function() {
@@ -34,31 +32,69 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    function getSelectedValues(selectElement) {
+        var result = [];
+        var options = selectElement && selectElement.options;
+        var opt;
+
+        for (var i = 0; i < options.length; i++) {
+            opt = options[i];
+            if (opt.selected) {
+                result.push(parseInt(opt.value, 10));
+            }
+        }
+        return result;
+    }
+
+    function setSelectedValues(selectElement, values) {
+        if (!selectElement || !values) return;
+
+        // Konwertujemy wartości na stringi dla spójnego porównania
+        var stringValues = values.map(function(val) {
+            return String(val);
+        });
+
+        for (var i = 0; i < selectElement.options.length; i++) {
+            selectElement.options[i].selected = stringValues.includes(selectElement.options[i].value);
+        }
+    }
+
     document.getElementById('create-payment-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
         var name = document.getElementById('create-payment-name').value;
         var title = document.getElementById('create-payment-title').value;
         var description = document.getElementById('create-payment-description').value;
-        var visible = document.getElementById('create-payment-visible').value;
+        var visible = document.getElementById('create-payment-visible').value === '1';
+        var active = document.getElementById('create-payment-active').value === '1';
         var locale = document.getElementById('create-payment-locale').value;
+        var currenciesSelect = document.getElementById('create-payment-currencies');
+        var currencies = getSelectedValues(currenciesSelect);
+        var data = {
+            name: name,
+            title: title,
+            description: description,
+            visible: visible,
+            active: active,
+            locale: locale,
+            currencies: currencies
+        };
+
 
         var urlParams = window.location.search;
         fetch('/app-store/view/payments-configuration/create' + urlParams, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: 'name=' + encodeURIComponent(name) +
-                '&title=' + encodeURIComponent(title) +
-                '&description=' + encodeURIComponent(description) +
-                '&visible=' + encodeURIComponent(visible) +
-                '&locale=' + encodeURIComponent(locale)
+            body: JSON.stringify(data)
         })
-            .then(safeJson)
+            .then(function(response) {
+                return safeJson(response);
+            })
             .then(function(data) {
-                if (data.success) {
+                if (data.message) {
                     document.getElementById('create-payment-modal').style.display = 'none';
                     window.location.reload();
 
@@ -68,9 +104,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(function(error) {
+                console.error('Fetch error:', error);
                 alert(error.message || 'An error occurred while communicating with the server.');
             });
-
     });
 
     document.querySelectorAll('.delete-btn').forEach(function(button) {
@@ -87,18 +123,20 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch('/app-store/view/payments-configuration/delete' + urlParams, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: 'payment_id=' + encodeURIComponent(paymentId)
+                body: JSON.stringify({
+                    payment_id: paymentId
+                })
             })
                 .then(safeJson)
                 .then(function(data) {
-                    if (data.success) {
+                    if (data.message) {
                         paymentItem.remove();
                         if (document.querySelectorAll('.payment-item').length === 0) {
                             document.querySelector('.payment-list').innerHTML =
-                                '<div style="color:#888; padding: 24px; text-align:center;">No configured payments.</div>';
+                                '<div class="payment-empty modern">No payments available.</div>';
                         }
                     } else {
                         alert('Error when removing payments: ' + (data.error || 'Unknown error'));
@@ -115,13 +153,30 @@ document.addEventListener('DOMContentLoaded', function() {
             var paymentItem = this.closest('.payment-item');
             var paymentId = paymentItem.dataset.id;
             var paymentName = paymentItem.dataset.name;
+            var paymentDescription = paymentItem.dataset.description || '';
             var paymentVisible = paymentItem.dataset.visible === 'visible' ? '1' : '0';
             var paymentActive = paymentItem.dataset.active === 'active' ? '1' : '0';
+            var paymentTitle = paymentItem.dataset.title || '';
 
             document.getElementById('edit-payment-id').value = paymentId;
             document.getElementById('edit-payment-name').value = paymentName;
             document.getElementById('edit-payment-visible').value = paymentVisible;
             document.getElementById('edit-payment-active').value = paymentActive;
+            document.getElementById('edit-payment-description').value = paymentDescription;
+            document.getElementById('edit-payment-title').value = paymentTitle;
+
+            var paymentCurrencies = [];
+            try {
+                if (paymentItem.dataset.currencies) {
+                    paymentCurrencies = JSON.parse(paymentItem.dataset.currencies);
+                }
+            } catch (e) {
+                console.error('Error parsing currencies:', e);
+            }
+
+            var currenciesSelect = document.getElementById('edit-payment-currencies');
+            setSelectedValues(currenciesSelect, paymentCurrencies);
+
             document.getElementById('edit-payment-modal').style.display = 'block';
         });
     });
@@ -137,33 +192,66 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('edit-payment-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        var paymentId = document.getElementById('edit-payment-id').value;
+        var paymentId = parseInt(document.getElementById('edit-payment-id').value, 10);
         var name = document.getElementById('edit-payment-name').value;
-        var visible = document.getElementById('edit-payment-visible').value;
-        var active = document.getElementById('edit-payment-active').value;
+        var title = document.getElementById('edit-payment-title').value;
+        var description = document.getElementById('edit-payment-description').value;
+        var visible = document.getElementById('edit-payment-visible').value === '1'; // Konwersja na boolean
+        var active = document.getElementById('edit-payment-active').value === '1'; // Konwersja na boolean
+        var currenciesSelect = document.getElementById('edit-payment-currencies');
+        var currencies = getSelectedValues(currenciesSelect);
+
+        var data = {
+            payment_id: paymentId,
+            name: name,
+            title: title,
+            description: description,
+            visible: visible,
+            active: active,
+            currencies: currencies
+        };
 
         var urlParams = window.location.search;
         fetch('/app-store/view/payments-configuration/edit' + urlParams, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-            body: 'payment_id=' + encodeURIComponent(paymentId) +
-                '&name=' + encodeURIComponent(name) +
-                '&visible=' + encodeURIComponent(visible) +
-                '&active=' + encodeURIComponent(active)
+            body: JSON.stringify(data)
         })
-            .then(safeJson)
+            .then(function(response) {
+                return safeJson(response);
+            })
             .then(function(data) {
-                if (data.success) {
+                if (data.message) {
                     var paymentItem = document.querySelector('.payment-item[data-id="' + paymentId + '"]');
-                    paymentItem.querySelector('.payment-name').textContent = name;
-                    paymentItem.querySelector('.payment-visible').textContent = '(visibility: ' + (visible == '1' ? 'visible' : 'hidden') + ')';
-
+                    var paymentNameSpan = paymentItem.querySelector('.payment-name');
+                    if (description) {
+                        paymentNameSpan.textContent = name + ' (' + description + ')';
+                    } else {
+                        paymentNameSpan.textContent = name;
+                    }
                     paymentItem.dataset.name = name;
-                    paymentItem.dataset.visible = visible == '1' ? 'visible' : 'hidden';
-                    paymentItem.dataset.active = active == '1' ? 'active' : 'inactive';
+                    paymentItem.dataset.description = description;
+                    paymentItem.dataset.title = title;
+                    paymentItem.dataset.visible = visible ? 'visible' : 'hidden';
+                    paymentItem.dataset.active = active ? 'active' : 'inactive';
+                    paymentItem.dataset.currencies = JSON.stringify(currencies);
+
+                    var visibilitySpan = paymentItem.querySelector('.payment-visible');
+                    if (visible) {
+                        visibilitySpan.innerHTML = '<span class="status-icon status-yes" title="Visible">&#x2714;</span> Visible';
+                    } else {
+                        visibilitySpan.innerHTML = '<span class="status-icon status-no" title="Hidden">&#x2716;</span> Hidden';
+                    }
+
+                    var activeSpan = paymentItem.querySelector('.payment-active');
+                    if (active) {
+                        activeSpan.innerHTML = '<span class="status-icon status-yes" title="Active">&#x2714;</span> Active';
+                    } else {
+                        activeSpan.innerHTML = '<span class="status-icon status-no" title="Inactive">&#x2716;</span> Inactive';
+                    }
 
                     document.getElementById('edit-payment-modal').style.display = 'none';
 
@@ -173,7 +261,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(function(error) {
+                console.error('Fetch error:', error);
                 alert(error.message || 'An error occurred while communicating with the server.');
             });
     });
-});
+})

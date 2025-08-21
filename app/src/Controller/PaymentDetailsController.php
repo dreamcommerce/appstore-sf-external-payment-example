@@ -70,7 +70,7 @@ class PaymentDetailsController extends AbstractController
         );
         $this->messageBus->dispatch($message);
 
-        return $this->json(null, Response::HTTP_ACCEPTED);
+        return $this->json(['message' => 'Channel creation request accepted'], Response::HTTP_ACCEPTED);
     }
 
     #[Route('/app-store/view/payment-details/get-channel/{channelId<\d+>}', name: 'payment_details_get_channel', methods: ['GET'], requirements: ['channelId' => '\d+'])]
@@ -78,18 +78,18 @@ class PaymentDetailsController extends AbstractController
         #[MapQueryString(validationGroups: ['channel'])] PaymentDetailsContextDto $context,
         int $channelId
     ): Response {
-        $channelData = $this->paymentChannelService->getChannel(
+        $channel = $this->paymentChannelService->getChannel(
             $context->shop,
             $channelId,
             $context->id,
             $context->translations
         );
 
-        if (!$channelData) {
-            return $this->json(null, Response::HTTP_NOT_FOUND);
+        if (!$channel) {
+            return $this->json(['message' => 'Channel not found'], Response::HTTP_NOT_FOUND);
         }
 
-        return $this->json($channelData, Response::HTTP_OK);
+        return $this->json($channel, Response::HTTP_OK);
     }
 
     #[Route('/app-store/view/payment-details/update-channel/{channelId<\d+>}', name: 'payment_details_update_channel', methods: ['PUT'], requirements: ['channelId' => '\d+'])]
@@ -118,7 +118,7 @@ class PaymentDetailsController extends AbstractController
         );
         $this->messageBus->dispatch($message);
 
-        return $this->json(null, Response::HTTP_ACCEPTED);
+        return $this->json(['message' => 'Channel update request accepted'], Response::HTTP_ACCEPTED);
     }
 
     #[Route('/app-store/view/payment-details/delete-channel/{channelId<\d+>}', name: 'payment_details_delete_channel', methods: ['DELETE'], requirements: ['channelId' => '\d+'])]
@@ -133,6 +133,6 @@ class PaymentDetailsController extends AbstractController
         );
         $this->messageBus->dispatch($message);
 
-        return $this->json(null, Response::HTTP_ACCEPTED);
+        return $this->json(['message' => 'Channel deletion request accepted'], Response::HTTP_ACCEPTED);
     }
 }

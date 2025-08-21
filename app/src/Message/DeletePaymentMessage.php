@@ -5,9 +5,9 @@ namespace App\Message;
 class DeletePaymentMessage
 {
     private string $shopCode;
-    private string $paymentId;
+    private int $paymentId;
 
-    public function __construct(string $shopCode, string $paymentId)
+    public function __construct(string $shopCode, int $paymentId)
     {
         $this->shopCode = $shopCode;
         $this->paymentId = $paymentId;
@@ -18,9 +18,8 @@ class DeletePaymentMessage
         return $this->shopCode;
     }
 
-    public function getPaymentId(): string
+    public function getPaymentId(): int
     {
         return $this->paymentId;
     }
 }
-

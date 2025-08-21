@@ -25,7 +25,10 @@ class CreatePaymentHandler
         $this->logger->info('Handling CreatePaymentMessage', [
             'shop_code' => $message->getShopCode(),
             'name' => $paymentData->getName(),
-            'title' => $paymentData->getTitle()
+            'title' => $paymentData->getTitle(),
+            'currencies' => $paymentData->getCurrencies(),
+            'supportedCurrencies' => $paymentData->getSupportedCurrencies(),
+            'description' => $paymentData->getDescription($paymentData->getLocale())
         ]);
         
         $this->paymentService->createPayment(
@@ -35,7 +38,8 @@ class CreatePaymentHandler
             $paymentData->getDescription($paymentData->getLocale()),
             $paymentData->isActive($paymentData->getLocale()) ?? true,
             $paymentData->getCurrencies(),
-            $paymentData->getLocale()
+            $paymentData->getLocale(),
+            $paymentData->getSupportedCurrencies()
         );
     }
 }

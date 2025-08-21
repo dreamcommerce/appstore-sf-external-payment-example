@@ -2,6 +2,7 @@
 
 namespace App\Service\Payment;
 
+use App\Dto\PaymentDto;
 use App\Service\Payment\Util\CurrencyHelper;
 use App\Service\Shop\ShopContextService;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\PaymentResource;
@@ -26,7 +27,7 @@ class PaymentService implements PaymentServiceInterface
         $this->shopContextService = $shopContextService;
     }
 
-    public function createPayment(string $shopCode, string $name, string $title, string $description, bool $visible, array $currencies, string $locale): void
+    public function createPayment(string $shopCode, string $name, string $title, string $description, bool $visible, array $currencies, string $locale, array $supportedCurrencies = []): void
     {
         $shopData = $this->shopContextService->getShopAndClient($shopCode);
         if (!$shopData) {
@@ -44,11 +45,12 @@ class PaymentService implements PaymentServiceInterface
                     'active' => 1,
                     'description' => $description,
                 ],
-            ]
+            ],
+            'supportedCurrencies' => !empty($supportedCurrencies) ? $supportedCurrencies : ['PLN'],
         ];
 
         $paymentResource = new PaymentResource($shopData['shopClient']);
-        $result = $paymentResource->insert($shopData['oauthShop'], $paymentData, $paymentData['payment_id']);
+        $result = $paymentResource->insert($shopData['oauthShop'], $paymentData);
 
         $this->logger->info('Payment created successfully', [
             'shop_code' => $shopCode,
@@ -117,12 +119,13 @@ class PaymentService implements PaymentServiceInterface
                 $paymentData = $payment->getData();
                 if ($this->hasTranslationForLocale($paymentData, $locale)) {
                     $translation = $paymentData['translations'][$locale];
-                    $payments[] = new \App\Dto\PaymentDto(
+                    $payments[] = new PaymentDto(
                         (int)($paymentData['payment_id'] ?? 0),
                         (string)($paymentData['name'] ?? ''),
                         (bool)($paymentData['visible'] ?? false),
                         (bool)($translation['active'] ?? false),
                         (array)($paymentData['currencies'] ?? []),
+                        (array)($paymentData['supportedCurrencies'] ?? []),
                         (string)($translation['title'] ?? ''),
                         (string)($translation['description'] ?? ''),
                         $locale

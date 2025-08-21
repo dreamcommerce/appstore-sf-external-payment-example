@@ -7,10 +7,10 @@ use App\ValueObject\PaymentData;
 class UpdatePaymentMessage
 {
     private string $shopCode;
-    private string $paymentId;
+    private int $paymentId;
     private PaymentData $paymentData;
 
-    public function __construct(string $shopCode, string $paymentId, PaymentData $paymentData)
+    public function __construct(string $shopCode, int $paymentId, PaymentData $paymentData)
     {
         $this->shopCode = $shopCode;
         $this->paymentId = $paymentId;
@@ -22,7 +22,7 @@ class UpdatePaymentMessage
         return $this->shopCode;
     }
 
-    public function getPaymentId(): string
+    public function getPaymentId(): int
     {
         return $this->paymentId;
     }
