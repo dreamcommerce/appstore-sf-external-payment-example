@@ -2,12 +2,14 @@
 
 namespace App\Service\Payment;
 
+use App\Entity\ShopAppInstallation;
+
 interface PaymentServiceInterface
 {
     /**
      * Creates a new payment for the shop
      */
-    public function createPayment(string $shopCode, string $name, string $title, string $description, bool $visible, array $currencies, string $locale, array $supportedCurrencies = []): void;
+    public function createPayment(ShopAppInstallation $shop, string $name, array $translations, array $currencies, array $supportedCurrencies = []): void;
 
     /**
      * Updates an existing payment

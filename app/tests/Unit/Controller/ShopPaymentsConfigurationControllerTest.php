@@ -121,8 +121,8 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
         // Act & Assert
         $response = $this->controller->deletePaymentAction($shopContext, $paymentDto);
 
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(Response::HTTP_ACCEPTED, $response->getStatusCode());
+        $this->assertInstanceOf(Response::class, $response);
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
     public function testEditPaymentAction(): void
@@ -154,8 +154,8 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
         $response = $this->controller->editPaymentAction($shopContext, $paymentDto);
 
         // Assert
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(Response::HTTP_ACCEPTED, $response->getStatusCode());
+        $this->assertInstanceOf(Response::class, $response);
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 
     public function testCreatePaymentAction(): void
@@ -196,7 +196,7 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
         $response = $this->controller->createPaymentAction($shopContext, $paymentDto);
 
         // Assert
-        $this->assertInstanceOf(JsonResponse::class, $response);
-        $this->assertEquals(Response::HTTP_ACCEPTED, $response->getStatusCode());
+        $this->assertInstanceOf(Response::class, $response);
+        $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
 }

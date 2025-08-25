@@ -25,6 +25,15 @@ framework:
             'App\Message\CreatePaymentMessage': async
             'App\Message\DeletePaymentMessage': async
             'App\Message\UpdatePaymentMessage': async
+            'App\Message\CreatePaymentChannelMessage': async
+            'App\Message\UpdatePaymentChannelMessage': async
+            'App\Message\DeletePaymentChannelMessage': async
         default_bus: messenger.bus.default
 
         failure_transport: failed
+
+        buses:
+            messenger.bus.default:
+                middleware:
+                    - App\Messenger\Middleware\ApiExceptionMiddleware
+                    - App\Messenger\Middleware\MessengerLoggingMiddleware

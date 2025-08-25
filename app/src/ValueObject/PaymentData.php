@@ -4,6 +4,7 @@ namespace App\ValueObject;
 
 class PaymentData
 {
+    public const DEFAULT_NOTIFY_TEMPLATE = "<strong>Dziękujemy za złożenie zamówienia</strong><br aria-hidden=\"true\"><br aria-hidden=\"true\">{if confirmation}Za chwilę otrzymasz e-mail z prośbą o jego potwierdzenie.{/if}<br aria-hidden=\"true\"><br aria-hidden=\"true\">Numer Twojego zamówienia: <strong>{order_id}</strong> <br aria-hidden=\"true\">Całkowita wartość zakupów, wraz z kosztami wysyłki: <strong>{sum}</strong><br aria-hidden=\"true\"><br aria-hidden=\"true\"><strong>Aby opłacić zamówienie kliknij na poniższy przycisk:</strong><br aria-hidden=\"true\">{payment_form}<br aria-hidden=\"true\"><br aria-hidden=\"true\">O zmianie statusu będziemy Cię również informować pocztą elektroniczną.<br aria-hidden=\"true\"><br aria-hidden=\"true\">W razie jakichkolwiek pytań lub wątpliwości prosimy o kontakt <br aria-hidden=\"true\">telefoniczny: {shop_phone} lub e-mailowy {shop_email}<br aria-hidden=\"true\"><br aria-hidden=\"true\">Pozdrawiamy,<br aria-hidden=\"true\">Zespół Obsługi Sklepu {shop_name}<br aria-hidden=\"true\"><br aria-hidden=\"true\">";
     private string $name;
     private array $translations;
     private array $currencies;
@@ -29,7 +30,7 @@ class PaymentData
         string $description = null,
         bool $active = true,
         string $locale = 'pl_PL',
-        string $notify = null,
+        string $notify = self::DEFAULT_NOTIFY_TEMPLATE,
         string $notifyMail = null,
         array $currencies = [1],
         array $supportedCurrencies = ['PLN']

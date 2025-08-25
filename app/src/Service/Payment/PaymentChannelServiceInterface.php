@@ -28,7 +28,7 @@ interface PaymentChannelServiceInterface
      * @param string $locale
      * @return ChannelData|null
      */
-    public function getChannel(string $shopCode, int $channelId, int $paymentId, string $locale): ?ChannelData;
+    public function getChannel(string $shopCode, int $channelId, int $paymentId, string $locale): ?array;
 
     /**
      * @param string $shopCode

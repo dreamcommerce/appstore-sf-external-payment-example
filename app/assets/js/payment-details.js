@@ -144,26 +144,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(() => alert('Error loading channel data.'));
     }
 
-    function deleteChannel(channelId) {
-        fetch('/app-store/view/payment-details/delete-channel/' + channelId + urlParams, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Channel deleted successfully.');
-                window.location.reload();
-            } else {
-                alert('Error: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(() => alert('Error while deleting channel.'));
-    }
-
     if (createChannelForm) {
         createChannelForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -198,14 +178,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     additional_info_label: additionalInfoLabel
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
+            .then(response => {
+                if (response.status === 204 || response.status === 201 || response.status === 200) {
                     createChannelModal.classList.remove('show');
                     createChannelForm.reset();
                     window.location.reload();
                 } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
+                    response.json().then(data => {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }).catch(() => alert('Error while creating channel.'));
                 }
             })
             .catch(() => alert('Error while creating channel.'));
@@ -251,17 +232,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     additional_info_label: additionalInfoLabel
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
+            .then(response => {
+                if (response.status === 204 || response.status === 200) {
                     editChannelModal.classList.remove('show');
                     editChannelForm.reset();
                     window.location.reload();
                 } else {
-                    alert('Error: ' + (data.error || 'Unknown error'));
+                    response.json().then(data => {
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                    }).catch(() => alert('Error while updating channel.'));
                 }
             })
             .catch(() => alert('Error while updating channel.'));
         });
+    }
+
+    function deleteChannel(channelId) {
+        fetch('/app-store/view/payment-details/delete-channel/' + channelId + urlParams, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (response.status === 204 || response.status === 200) {
+                alert('Channel deleted successfully.');
+                window.location.reload();
+            } else {
+                response.json().then(data => {
+                    alert('Error: ' + (data.error || 'Unknown error'));
+                }).catch(() => alert('Error while deleting channel.'));
+            }
+        })
+        .catch(() => alert('Error while deleting channel.'));
     }
 });

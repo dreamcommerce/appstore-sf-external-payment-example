@@ -6,7 +6,7 @@ use App\Entity\ShopAppInstallation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-class ShopAppInstallationRepository extends ServiceEntityRepository
+class ShopAppInstallationRepository extends ServiceEntityRepository implements ShopAppInstallationRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -17,6 +17,15 @@ class ShopAppInstallationRepository extends ServiceEntityRepository
     {
         $em = $this->getEntityManager();
         $em->persist($shopAppInstallation);
+        if ($flush) {
+            $em->flush();
+        }
+    }
+
+    public function remove(ShopAppInstallation $shopAppInstallation, bool $flush = true): void
+    {
+        $em = $this->getEntityManager();
+        $em->remove($shopAppInstallation);
         if ($flush) {
             $em->flush();
         }

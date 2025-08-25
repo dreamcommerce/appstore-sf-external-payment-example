@@ -42,7 +42,10 @@ class ShopContextService
         $oauthShop = $this->oauthService->getShop($shopModel);
         $shopClient = $this->oauthService->getShopClient();
 
-        return ['oauthShop' => $oauthShop, 'shopClient' => $shopClient];
+        return [
+            'oauthShop' => $oauthShop,
+            'shopClient' => $shopClient,
+            'shopEntity' => $shopAppInstalled
+        ];
     }
 }
-

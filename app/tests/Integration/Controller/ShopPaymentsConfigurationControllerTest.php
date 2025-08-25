@@ -198,13 +198,12 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
         // Sprawdzamy odpowiedź
         $this->assertEquals(
-            Response::HTTP_ACCEPTED,
+            Response::HTTP_NO_CONTENT,
             $this->client->getResponse()->getStatusCode(),
             $this->dumpResponseForDebug("Create Payment response error")
         );
 
-        $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertArrayHasKey('message', $responseData);
+        $this->assertEmpty($this->client->getResponse()->getContent());
     }
 
     public function testEditPayment(): void
@@ -238,13 +237,12 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
         // Sprawdzamy odpowiedź
         $this->assertEquals(
-            Response::HTTP_ACCEPTED,
+            Response::HTTP_NO_CONTENT,
             $this->client->getResponse()->getStatusCode(),
             $this->dumpResponseForDebug("Edit Payment response error")
         );
 
-        $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertArrayHasKey('message', $responseData);
+        $this->assertEmpty($this->client->getResponse()->getContent());
     }
 
     public function testDeletePayment(): void
@@ -272,12 +270,11 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
         // Sprawdzamy odpowiedź
         $this->assertEquals(
-            Response::HTTP_ACCEPTED,
+            Response::HTTP_NO_CONTENT,
             $this->client->getResponse()->getStatusCode(),
             $this->dumpResponseForDebug("Delete Payment response error")
         );
 
-        $responseData = json_decode($this->client->getResponse()->getContent(), true);
-        $this->assertArrayHasKey('message', $responseData);
+        $this->assertEmpty($this->client->getResponse()->getContent());
     }
 }

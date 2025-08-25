@@ -90,23 +90,26 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(data)
         })
-            .then(function(response) {
-                return safeJson(response);
-            })
-            .then(function(data) {
-                if (data.message) {
-                    document.getElementById('create-payment-modal').style.display = 'none';
-                    window.location.reload();
-
-                    alert('Payment has been created.');
-                } else {
-                    alert('Error while creating payment: ' + (data.error || 'Unknown error'));
-                }
-            })
-            .catch(function(error) {
-                console.error('Fetch error:', error);
-                alert(error.message || 'An error occurred while communicating with the server.');
-            });
+        .then(function(response) {
+            if (response.status === 204 || response.status === 201 || response.status === 200) {
+                document.getElementById('create-payment-modal').style.display = 'none';
+                window.location.reload();
+                alert('Payment has been created.');
+            } else {
+                response.text().then(function(text) {
+                    try {
+                        var data = JSON.parse(text);
+                        alert('Error while creating payment: ' + (data.error || 'Unknown error'));
+                    } catch (e) {
+                        alert('Error while creating payment.');
+                    }
+                });
+            }
+        })
+        .catch(function(error) {
+            console.error('Fetch error:', error);
+            alert(error.message || 'An error occurred while communicating with the server.');
+        });
     });
 
     document.querySelectorAll('.delete-btn').forEach(function(button) {
@@ -117,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             var paymentItem = this.closest('.payment-item');
-            var paymentId = paymentItem.dataset.id;
+            var paymentId = parseInt(paymentItem.dataset.id, 10); // KONWERSJA NA INT
 
             var urlParams = window.location.search;
             fetch('/app-store/view/payments-configuration/delete' + urlParams, {
@@ -127,24 +130,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
-                    payment_id: paymentId
+                    payment_id: paymentId // ZAWSZE INT
                 })
             })
-                .then(safeJson)
-                .then(function(data) {
-                    if (data.message) {
-                        paymentItem.remove();
-                        if (document.querySelectorAll('.payment-item').length === 0) {
-                            document.querySelector('.payment-list').innerHTML =
-                                '<div class="payment-empty modern">No payments available.</div>';
-                        }
-                    } else {
-                        alert('Error when removing payments: ' + (data.error || 'Unknown error'));
+            .then(function(response) {
+                if (response.status === 204 || response.status === 200) {
+                    paymentItem.remove();
+                    if (document.querySelectorAll('.payment-item').length === 0) {
+                        document.querySelector('.payment-list').innerHTML =
+                            '<div class="payment-empty modern">No payments available.</div>';
                     }
-                })
-                .catch(function(error) {
-                    alert(error.message || 'There was a mistake when communicating with the server.');
-                });
+                } else {
+                    response.text().then(function(text) {
+                        try {
+                            var data = JSON.parse(text);
+                            alert('Error when removing payments: ' + (data.error || 'Unknown error'));
+                        } catch (e) {
+                            alert('Error when removing payments.');
+                        }
+                    });
+                }
+            })
+            .catch(function(error) {
+                alert(error.message || 'There was a mistake when communicating with the server.');
+            });
         });
     });
 
@@ -220,49 +229,52 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(data)
         })
-            .then(function(response) {
-                return safeJson(response);
-            })
-            .then(function(data) {
-                if (data.message) {
-                    var paymentItem = document.querySelector('.payment-item[data-id="' + paymentId + '"]');
-                    var paymentNameSpan = paymentItem.querySelector('.payment-name');
-                    if (description) {
-                        paymentNameSpan.textContent = name + ' (' + description + ')';
-                    } else {
-                        paymentNameSpan.textContent = name;
-                    }
-                    paymentItem.dataset.name = name;
-                    paymentItem.dataset.description = description;
-                    paymentItem.dataset.title = title;
-                    paymentItem.dataset.visible = visible ? 'visible' : 'hidden';
-                    paymentItem.dataset.active = active ? 'active' : 'inactive';
-                    paymentItem.dataset.currencies = JSON.stringify(currencies);
-
-                    var visibilitySpan = paymentItem.querySelector('.payment-visible');
-                    if (visible) {
-                        visibilitySpan.innerHTML = '<span class="status-icon status-yes" title="Visible">&#x2714;</span> Visible';
-                    } else {
-                        visibilitySpan.innerHTML = '<span class="status-icon status-no" title="Hidden">&#x2716;</span> Hidden';
-                    }
-
-                    var activeSpan = paymentItem.querySelector('.payment-active');
-                    if (active) {
-                        activeSpan.innerHTML = '<span class="status-icon status-yes" title="Active">&#x2714;</span> Active';
-                    } else {
-                        activeSpan.innerHTML = '<span class="status-icon status-no" title="Inactive">&#x2716;</span> Inactive';
-                    }
-
-                    document.getElementById('edit-payment-modal').style.display = 'none';
-
-                    alert('Payment has been updated.');
+        .then(function(response) {
+            if (response.status === 204 || response.status === 200) {
+                var paymentItem = document.querySelector('.payment-item[data-id="' + paymentId + '"]');
+                var paymentNameSpan = paymentItem.querySelector('.payment-name');
+                if (description) {
+                    paymentNameSpan.textContent = name + ' (' + description + ')';
                 } else {
-                    alert('Error while updating payment: ' + (data.error || 'Unknown error'));
+                    paymentNameSpan.textContent = name;
                 }
-            })
-            .catch(function(error) {
-                console.error('Fetch error:', error);
-                alert(error.message || 'An error occurred while communicating with the server.');
-            });
+                paymentItem.dataset.name = name;
+                paymentItem.dataset.description = description;
+                paymentItem.dataset.title = title;
+                paymentItem.dataset.visible = visible ? 'visible' : 'hidden';
+                paymentItem.dataset.active = active ? 'active' : 'inactive';
+                paymentItem.dataset.currencies = JSON.stringify(currencies);
+
+                var visibilitySpan = paymentItem.querySelector('.payment-visible');
+                if (visible) {
+                    visibilitySpan.innerHTML = '<span class="status-icon status-yes" title="Visible">&#x2714;</span> Visible';
+                } else {
+                    visibilitySpan.innerHTML = '<span class="status-icon status-no" title="Hidden">&#x2716;</span> Hidden';
+                }
+
+                var activeSpan = paymentItem.querySelector('.payment-active');
+                if (active) {
+                    activeSpan.innerHTML = '<span class="status-icon status-yes" title="Active">&#x2714;</span> Active';
+                } else {
+                    activeSpan.innerHTML = '<span class="status-icon status-no" title="Inactive">&#x2716;</span> Inactive';
+                }
+
+                document.getElementById('edit-payment-modal').style.display = 'none';
+                alert('Payment has been updated.');
+            } else {
+                response.text().then(function(text) {
+                    try {
+                        var data = JSON.parse(text);
+                        alert('Error while updating payment: ' + (data.error || 'Unknown error'));
+                    } catch (e) {
+                        alert('Error while updating payment.');
+                    }
+                });
+            }
+        })
+        .catch(function(error) {
+            console.error('Fetch error:', error);
+            alert(error.message || 'An error occurred while communicating with the server.');
+        });
     });
 })

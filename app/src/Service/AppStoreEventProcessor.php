@@ -37,8 +37,8 @@ class AppStoreEventProcessor
             $this->oauthService->authenticate($event);
 
             $paymentData = PaymentData::createForNewPayment(
-                'External Payment '.uniqid().' from example App', // title
-                'External payment created during installation',   // description
+                'External Payment '.uniqid().' from example App',
+                'External payment created during installation',
             );
             $this->bus->dispatch(new CreatePaymentMessage($event->shopId, $paymentData));
         }

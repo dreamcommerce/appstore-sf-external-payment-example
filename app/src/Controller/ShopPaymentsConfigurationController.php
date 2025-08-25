@@ -76,7 +76,7 @@ class ShopPaymentsConfigurationController extends AbstractController
         $message = new DeletePaymentMessage($shopContext->shop, $paymentId);
         $this->messageBus->dispatch($message);
 
-        return $this->json(['message' => 'Payment deletion request accepted'], Response::HTTP_ACCEPTED);
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/app-store/view/payments-configuration/edit', name: 'payments_configuration_edit', methods: ['POST'])]
@@ -107,7 +107,7 @@ class ShopPaymentsConfigurationController extends AbstractController
 
         $this->messageBus->dispatch($message);
 
-        return $this->json(['message' => 'Payment update request accepted'], Response::HTTP_ACCEPTED);
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/app-store/view/payments-configuration/create', name: 'payments_configuration_create', methods: ['POST'])]
@@ -145,13 +145,18 @@ class ShopPaymentsConfigurationController extends AbstractController
             }
         }
 
-        $paymentData = PaymentData::createForNewPayment(
-            $paymentDto->title,
-            $paymentDto->description ?? '',
-            $active,
-            $locale,
-            null,
-            null,
+        $translations = [
+            $locale => [
+                'title' => $paymentDto->title,
+                'description' => $paymentDto->description ?? '',
+                'active' => $active,
+                'notify' => null,
+            ]
+        ];
+
+        $paymentData = new PaymentData(
+            'external',
+            $translations,
             $currencies,
             $supportedCurrencies
         );
@@ -159,6 +164,6 @@ class ShopPaymentsConfigurationController extends AbstractController
         $message = new CreatePaymentMessage($shopContext->shop, $paymentData);
         $this->messageBus->dispatch($message);
 
-        return $this->json(['message' => 'Payment creation request accepted'], Response::HTTP_ACCEPTED);
+        return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

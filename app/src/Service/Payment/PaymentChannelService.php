@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Payment;
 
 use App\Service\Shop\ShopContextService;
@@ -22,11 +24,7 @@ class PaymentChannelService implements PaymentChannelServiceInterface
 
     public function getChannelsForPayment(string $shopCode, int $paymentId): array
     {
-        $shopData = $this->getShopDataOrLogError($shopCode, 'fetching payment channels');
-        if (!$shopData) {
-            return [];
-        }
-
+        $shopData = $this->getShopDataOrThrow($shopCode);
         $channelResource = new PaymentChannelResource($shopData['shopClient']);
         $channels = $channelResource->findAll($shopData['oauthShop'], ['payment_id' => $paymentId]);
         $result = [];
@@ -39,36 +37,17 @@ class PaymentChannelService implements PaymentChannelServiceInterface
 
     public function createChannel(string $shopCode, int $paymentId, ChannelData $channelData, string $locale): void
     {
-        $shopData = $this->getShopDataOrLogError($shopCode, 'creating payment channel');
-        if (!$shopData) {
-            throw new \RuntimeException('Shop not found');
-        }
-
+        $shopData = $this->getShopDataOrThrow($shopCode);
         $channelResource = new PaymentChannelResource($shopData['shopClient']);
         $channelResource->insert($shopData['oauthShop'], $channelData->toApiArray(), ['payment_id' => $paymentId]);
-
-        $this->logger->info('Payment channel created successfully', [
-            'shop_code' => $shopCode,
-            'payment_id' => $paymentId,
-            'locale' => $locale,
-            'channel_data' => [
-                'type' => $channelData->getType(),
-                'application_channel_id' => $channelData->getApplicationChannelId()
-            ]
-        ]);
     }
 
-    public function getChannel(string $shopCode, int $channelId, int $paymentId, string $locale): ?ChannelData
+    public function getChannel(string $shopCode, int $channelId, int $paymentId, string $locale): ?array
     {
-        $shopData = $this->getShopDataOrLogError($shopCode, 'fetching payment channel');
-        if (!$shopData) {
-            return null;
-        }
-
+        $shopData = $this->getShopDataOrThrow($shopCode);
         $channelResource = new PaymentChannelResource($shopData['shopClient']);
         $channel = $channelResource->find($shopData['oauthShop'], $channelId, ['payment_id' => $paymentId]);
         $data = $channel->getData();
-
         $channelData = ChannelData::fromArray($data);
         if (!$channelData->hasTranslationForLocale($locale)) {
             $this->logger->warning('Translation not found for locale', [
@@ -77,54 +56,28 @@ class PaymentChannelService implements PaymentChannelServiceInterface
                 'locale' => $locale
             ]);
         }
-
-        return $channelData;
+        return $channelData->toArray();
     }
 
     public function updateChannel(string $shopCode, int $paymentId, ChannelData $channelData): void
     {
-        $shopData = $this->getShopDataOrLogError($shopCode, 'updating payment channel');
-        if (!$shopData) {
-            throw new \RuntimeException('Shop not found');
-        }
-
+        $shopData = $this->getShopDataOrThrow($shopCode);
         $channelResource = new PaymentChannelResource($shopData['shopClient']);
         $channelResource->update($shopData['oauthShop'], $channelData->getChannelId(), $channelData->toApiArray(), ['payment_id' => $paymentId]);
-
-        $this->logger->info('Payment channel updated successfully', [
-            'shop_code' => $shopCode,
-            'payment_id' => $paymentId,
-            'channel_id' => $channelData->getChannelId(),
-            'channel_data' => [
-                'type' => $channelData->getType(),
-                'application_channel_id' => $channelData->getApplicationChannelId()
-            ]
-        ]);
     }
 
     public function deleteChannel(string $shopCode, int $channelId, int $paymentId): void
     {
-        $shopData = $this->getShopDataOrLogError($shopCode, 'deleting payment channel');
-        if (!$shopData) {
-            throw new \RuntimeException('Shop not found');
-        }
-
+        $shopData = $this->getShopDataOrThrow($shopCode);
         $channelResource = new PaymentChannelResource($shopData['shopClient']);
         $channelResource->delete($shopData['oauthShop'], $channelId, ['payment_id' => $paymentId]);
-
-        $this->logger->info('Payment channel deleted successfully', [
-            'shop_code' => $shopCode,
-            'payment_id' => $paymentId,
-            'channel_id' => $channelId
-        ]);
     }
 
-    private function getShopDataOrLogError(string $shopCode, string $operation): ?array
+    private function getShopDataOrThrow(string $shopCode): array
     {
         $shopData = $this->shopContextService->getShopAndClient($shopCode);
         if (!$shopData) {
-            $this->logger->error(sprintf('Shop not found when %s', $operation), ['shop_code' => $shopCode]);
-            return null;
+            throw new \RuntimeException('Shop not found');
         }
         return $shopData;
     }
