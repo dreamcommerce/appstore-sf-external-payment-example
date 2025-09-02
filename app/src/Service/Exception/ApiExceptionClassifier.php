@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Exception;
 
 use DreamCommerce\Component\ShopAppstore\Api\Exception\ApiException;

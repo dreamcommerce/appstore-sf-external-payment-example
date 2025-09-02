@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Factory;
 
 use App\Entity\ShopAppInstallation;
@@ -10,9 +12,12 @@ class ShopAppInstallationFactory
 {
     public function fromOAuthShop(OAuthShop $shop, string $authCode): ShopAppInstallation
     {
+        $uri = $shop->getUri();
+        $uriString = $uri !== null ? $uri->__toString() : '';
+
         return new ShopAppInstallation(
             $shop->getId(),
-            $shop->getUri(),
+            $uriString,
             $shop->getVersion(),
             $authCode
         );

@@ -26,9 +26,6 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
         $this->client->setServerParameter('CONTENT_TYPE', 'application/json');
     }
 
-    /**
-     * Mockuje wymagane serwisy dla testów integracyjnych
-     */
     private function mockServices(): void
     {
         $container = $this->client->getContainer();
@@ -148,19 +145,17 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
     public function testPaymentSettings(): void
     {
-        // Generujemy parametry uwierzytelniające
+        // When
         $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-
-        // Budujemy URL z parametrami
+        // When
         $queryString = http_build_query($authParams);
-
-        // Wykonujemy żądanie GET z parametrami uwierzytelniającymi
+        // When
         $this->client->request(
             'GET',
             '/app-store/view/payments-configuration?' . $queryString
         );
 
-        // Sprawdzamy odpowiedź
+        // Then
         $this->assertEquals(
             Response::HTTP_OK,
             $this->client->getResponse()->getStatusCode(),
@@ -171,13 +166,11 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
     public function testCreatePayment(): void
     {
-        // Generujemy parametry uwierzytelniające
+        // When
         $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-
-        // Budujemy URL z parametrami
+        // When
         $queryString = http_build_query($authParams);
-
-        // Przygotuj dane JSON do wysłania
+        // When
         $paymentData = [
             'name' => 'external',
             'title' => 'Test Payment',
@@ -186,7 +179,7 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
             'locale' => $this->testLocale
         ];
 
-        // Wykonaj żądanie POST
+        // When
         $this->client->request(
             'POST',
             '/app-store/view/payments-configuration/create?' . $queryString,
@@ -196,36 +189,35 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
             json_encode($paymentData)
         );
 
-        // Sprawdzamy odpowiedź
+        // Then
         $this->assertEquals(
             Response::HTTP_NO_CONTENT,
             $this->client->getResponse()->getStatusCode(),
             $this->dumpResponseForDebug("Create Payment response error")
         );
 
+        // Then
         $this->assertEmpty($this->client->getResponse()->getContent());
     }
 
     public function testEditPayment(): void
     {
-        // Generujemy parametry uwierzytelniające
+        // When
         $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-
-        // Budujemy URL z parametrami
+        // When
         $queryString = http_build_query($authParams);
-
-        // Przygotuj dane JSON do wysłania z poprawnymi ID walut
+        // When
         $paymentData = [
-            'payment_id' => 1, // ID istniejącej płatności
+            'payment_id' => 1,
             'name' => 'external',
             'visible' => false,
             'active' => true,
             'title' => 'Updated Payment',
             'description' => 'Updated description',
-            'currencies' => [1, 2, 3] // ID walut jako liczby całkowite
+            'currencies' => [1, 2, 3]
         ];
 
-        // Wykonaj żądanie POST
+        // When
         $this->client->request(
             'POST',
             '/app-store/view/payments-configuration/edit?' . $queryString,
@@ -235,30 +227,29 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
             json_encode($paymentData)
         );
 
-        // Sprawdzamy odpowiedź
+        // Then
         $this->assertEquals(
             Response::HTTP_NO_CONTENT,
             $this->client->getResponse()->getStatusCode(),
             $this->dumpResponseForDebug("Edit Payment response error")
         );
 
+        // Then
         $this->assertEmpty($this->client->getResponse()->getContent());
     }
 
     public function testDeletePayment(): void
     {
-        // Generujemy parametry uwierzytelniające
+        // When
         $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-
-        // Budujemy URL z parametrami
+        // When
         $queryString = http_build_query($authParams);
-
-        // Przygotuj dane JSON do wysłania
+        // When
         $paymentData = [
-            'payment_id' => 1 // ID istniejącej płatności
+            'payment_id' => 1
         ];
 
-        // Wykonaj żądanie POST
+        // When
         $this->client->request(
             'POST',
             '/app-store/view/payments-configuration/delete?' . $queryString,
@@ -268,13 +259,14 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
             json_encode($paymentData)
         );
 
-        // Sprawdzamy odpowiedź
+        // Then
         $this->assertEquals(
             Response::HTTP_NO_CONTENT,
             $this->client->getResponse()->getStatusCode(),
             $this->dumpResponseForDebug("Delete Payment response error")
         );
 
+        // Then
         $this->assertEmpty($this->client->getResponse()->getContent());
     }
 }

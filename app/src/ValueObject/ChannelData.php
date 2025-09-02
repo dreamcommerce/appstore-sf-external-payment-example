@@ -1,6 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\ValueObject;
+
+use InvalidArgumentException;
 
 class ChannelData
 {
@@ -16,7 +20,7 @@ class ChannelData
         array $translations = []
     ) {
         if (!is_array($translations)) {
-            throw new \InvalidArgumentException('Translations must be an array.');
+            throw new InvalidArgumentException('Translations must be an array.');
         }
 
         $this->channelId = $channelId;

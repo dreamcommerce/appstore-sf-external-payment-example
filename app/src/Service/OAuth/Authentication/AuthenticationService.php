@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\OAuth\Authentication;
 
 use App\Service\Event\AppStoreLifecycleEvent;
