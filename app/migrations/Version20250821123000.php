@@ -20,7 +20,7 @@ final class Version20250821123000 extends AbstractMigration
         $this->addSql('CREATE TABLE shop_payment_methods (
             id INT AUTO_INCREMENT NOT NULL,
             shop_id INT UNSIGNED NOT NULL,
-            payment_method_id VARCHAR(255) NOT NULL,
+            payment_method_id INT UNSIGNED NOT NULL,
             created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',
             removed_at DATETIME DEFAULT NULL COMMENT \'(DC2Type:datetime_immutable)\',
             PRIMARY KEY(id),

@@ -21,8 +21,8 @@ class ShopPaymentMethod
     #[ORM\JoinColumn(name: 'shop_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
     private ShopAppInstallation $shop;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private string $paymentMethodId;
+    #[ORM\Column(type: 'integer')]
+    private int $paymentMethodId;
 
     #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $createdAt;
@@ -30,7 +30,7 @@ class ShopPaymentMethod
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $removedAt = null;
 
-    public function __construct(ShopAppInstallation $shop, string $paymentMethodId)
+    public function __construct(ShopAppInstallation $shop, int $paymentMethodId)
     {
         $this->shop = $shop;
         $this->paymentMethodId = $paymentMethodId;
@@ -47,7 +47,7 @@ class ShopPaymentMethod
         return $this->shop;
     }
 
-    public function getPaymentMethodId(): string
+    public function getPaymentMethodId(): int
     {
         return $this->paymentMethodId;
     }

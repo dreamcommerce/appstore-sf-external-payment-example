@@ -12,15 +12,15 @@ interface PaymentMethodPersistenceServiceInterface
      * Saves the payment method for a given store
      *
      * @param ShopAppInstallation $shop
-     * @param string $paymentMethodId
+     * @param int $paymentMethodId
      */
-    public function persistPaymentMethod(ShopAppInstallation $shop, string $paymentMethodId): void;
+    public function persistPaymentMethod(ShopAppInstallation $shop, int $paymentMethodId): void;
 
     /**
      * Removes (soft delete) to connect payments with a given store
      *
      * @param ShopAppInstallation $shop
-     * @param string $paymentMethodId
+     * @param int $paymentMethodId
      */
-    public function removePaymentMethod(ShopAppInstallation $shop, string $paymentMethodId): void;
+    public function removePaymentMethod(ShopAppInstallation $shop, int $paymentMethodId): void;
 }

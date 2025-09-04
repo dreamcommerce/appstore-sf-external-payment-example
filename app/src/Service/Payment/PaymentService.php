@@ -58,7 +58,7 @@ class PaymentService implements PaymentServiceInterface
         $paymentResource = new PaymentResource($shopData['shopClient']);
         $paymentResource->delete($shopData['oauthShop'], $paymentId);
 
-        $this->paymentMethodPersistenceService->removePaymentMethod($shopData['shopEntity'], (string)$paymentId);
+        $this->paymentMethodPersistenceService->removePaymentMethod($shopData['shopEntity'], $paymentId);
     }
 
     public function getPaymentSettingsForShop(string $shopCode, string $locale): array

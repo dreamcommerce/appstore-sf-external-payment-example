@@ -72,8 +72,7 @@ class ShopPaymentsConfigurationController extends AbstractController
             'payment_id' => $paymentDto->payment_id,
         ]);
 
-        $paymentId = (int) $paymentDto->payment_id;
-        $message = new DeletePaymentMessage($shopContext->shop, $paymentId);
+        $message = new DeletePaymentMessage($shopContext->shop, $paymentDto->payment_id);
         $this->messageBus->dispatch($message);
 
         return new Response('', Response::HTTP_NO_CONTENT);
@@ -98,10 +97,9 @@ class ShopPaymentsConfigurationController extends AbstractController
         ];
 
         $paymentData = PaymentData::createForUpdate($updateData, $shopContext->translations);
-        $paymentId = (int)$paymentDto->payment_id;
         $message = new UpdatePaymentMessage(
             $shopContext->shop,
-            $paymentId,
+            $paymentDto->payment_id,
             $paymentData
         );
 

@@ -35,7 +35,7 @@ final class ShopPaymentMethodRepository extends ServiceEntityRepository implemen
         }
     }
 
-    public function findActiveOneByShopAndPaymentMethodId(ShopAppInstallation $shop, string $paymentMethodId): ?ShopPaymentMethod
+    public function findActiveOneByShopAndPaymentMethodId(ShopAppInstallation $shop, int $paymentMethodId): ?ShopPaymentMethod
     {
         return $this->findOneBy([
             'shop' => $shop,

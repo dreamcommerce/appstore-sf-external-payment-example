@@ -17,7 +17,7 @@ class PaymentMethodPersistenceService implements PaymentMethodPersistenceService
     ) {
     }
 
-    public function persistPaymentMethod(ShopAppInstallation $shop, string $paymentMethodId): void
+    public function persistPaymentMethod(ShopAppInstallation $shop, int $paymentMethodId): void
     {
         $existingMethod = $this->shopPaymentMethodRepository->findActiveOneByShopAndPaymentMethodId($shop, $paymentMethodId);
         if ($existingMethod) {
@@ -51,7 +51,7 @@ class PaymentMethodPersistenceService implements PaymentMethodPersistenceService
         ]);
     }
 
-    public function removePaymentMethod(ShopAppInstallation $shop, string $paymentMethodId): void
+    public function removePaymentMethod(ShopAppInstallation $shop, int $paymentMethodId): void
     {
         $method = $this->shopPaymentMethodRepository->findActiveOneByShopAndPaymentMethodId($shop, $paymentMethodId);
         if ($method instanceof ShopPaymentMethod) {

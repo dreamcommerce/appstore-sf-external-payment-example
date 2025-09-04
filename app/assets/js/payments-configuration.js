@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function setSelectedValues(selectElement, values) {
         if (!selectElement || !values) return;
 
-        // Konwertujemy wartości na stringi dla spójnego porównania
         var stringValues = values.map(function(val) {
             return String(val);
         });
@@ -120,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             var paymentItem = this.closest('.payment-item');
-            var paymentId = parseInt(paymentItem.dataset.id, 10); // KONWERSJA NA INT
+            var paymentId = parseInt(paymentItem.dataset.id, 10);
 
             var urlParams = window.location.search;
             fetch('/app-store/view/payments-configuration/delete' + urlParams, {
@@ -130,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({
-                    payment_id: paymentId // ZAWSZE INT
+                    payment_id: paymentId
                 })
             })
             .then(function(response) {
@@ -205,8 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var name = document.getElementById('edit-payment-name').value;
         var title = document.getElementById('edit-payment-title').value;
         var description = document.getElementById('edit-payment-description').value;
-        var visible = document.getElementById('edit-payment-visible').value === '1'; // Konwersja na boolean
-        var active = document.getElementById('edit-payment-active').value === '1'; // Konwersja na boolean
+        var visible = document.getElementById('edit-payment-visible').value === '1';
+        var active = document.getElementById('edit-payment-active').value === '1';
         var currenciesSelect = document.getElementById('edit-payment-currencies');
         var currencies = getSelectedValues(currenciesSelect);
 

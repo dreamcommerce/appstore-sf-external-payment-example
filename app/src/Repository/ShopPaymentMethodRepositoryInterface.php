@@ -22,5 +22,5 @@ interface ShopPaymentMethodRepositoryInterface
     /**
      * Find active payment method by shop and paymentMethodId
      */
-    public function findActiveOneByShopAndPaymentMethodId(ShopAppInstallation $shop, string $paymentMethodId): ?ShopPaymentMethod;
+    public function findActiveOneByShopAndPaymentMethodId(ShopAppInstallation $shop, int $paymentMethodId): ?ShopPaymentMethod;
 }
