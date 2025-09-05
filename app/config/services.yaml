@@ -39,6 +39,10 @@ services:
         arguments:
             $handlers: !tagged_iterator { tag: 'app.exception_handler', default_priority_method: '' }
 
+    App\EventListener\CorsOptionsRequestListener:
+      tags:
+        - { name: kernel.event_subscriber }
+
     # Messenger middlewares configuration
     App\Messenger\Middleware\ApiExceptionMiddleware:
         arguments:
