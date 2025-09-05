@@ -24,6 +24,13 @@ class PaymentData
         if (!is_array($translations)) {
             throw new InvalidArgumentException('Translations must be an array.');
         }
+        foreach ($translations as $locale => &$localeData) {
+            if (!array_key_exists('notify', $localeData) || $localeData['notify'] === null) {
+                $localeData['notify'] = self::DEFAULT_NOTIFY_TEMPLATE;
+            }
+        }
+        unset($localeData);
+
         $this->name = $name;
         $this->translations = $translations;
         $this->currencies = $currencies;
