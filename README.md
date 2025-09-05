@@ -170,3 +170,16 @@ This will:
 - Copy all JS files from `assets/js/` to `public/assets/`
 
 You should run this command after any change in frontend assets.
+
+### JS Snippet Integration in Shoper
+To enable payment handling, you must manually copy the JS snippet to your Shoper application snippet (for RWD skin).
+
+1. Locate the file:
+   `assets/js/snippets/payment-data-handler.js`
+2. Copy the entire content of this file.
+3. Change the URL 'API_URL' in the script.
+4. In the Shoper admin panel, go to the AppTools and application snippet section (for RWD skin).
+5. Paste the JS code directly into the snippet field.
+6. Ensure the snippet is loaded on the cart or payment page.
+
+> **Note:** This JS file is not published automatically by Symfony and should not be treated as a standard frontend asset. It is intended for manual integration via the Shoper application panel.

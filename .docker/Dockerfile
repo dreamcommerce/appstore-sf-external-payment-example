@@ -26,7 +26,9 @@ RUN curl -sS https://get.symfony.com/cli/installer | bash && \
     mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 
 USER appuser
-RUN composer install --no-interaction --optimize-autoloader
+RUN composer install --no-interaction --optimize-autoloader \
+    && php bin/console cache:clear \
+    && php bin/console assets:install
 USER root
 
 EXPOSE 8080

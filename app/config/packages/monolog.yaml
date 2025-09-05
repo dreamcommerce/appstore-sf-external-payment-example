@@ -5,7 +5,7 @@ monolog:
             path: "%kernel.logs_dir%/dev.log"
             max_files: 10
             level: debug
-            channels: ["!event", "!doctrine", "!console"]
+            channels: ["!event", "!doctrine", "!console", "!php"]
 
         console:
             type: console

@@ -43,3 +43,10 @@ services:
 
     App\Messenger\Middleware\ApiExceptionMiddleware:
         tags: [{ name: 'messenger.bus_middleware', bus: 'messenger.bus.default', priority: 100 }]
+
+    App\EventListener\CorsOptionsRequestListener:
+        tags:
+            - { name: kernel.event_subscriber }
+
+parameters:
+    external_payment.gateway_url: 'https://payment-gateway.example.com/payment'
