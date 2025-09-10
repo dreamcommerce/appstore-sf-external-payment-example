@@ -68,7 +68,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
     {
         // Arrange
         $shopContext = new ShopContextDto('test-shop', 'en_US');
-
         $expectedPayments = [
             [
                 'payment_id' => 1,
@@ -78,7 +77,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
                 'currencies' => ['USD', 'EUR']
             ]
         ];
-
         $this->paymentService
             ->expects($this->once())
             ->method('getPaymentSettingsForShop')
@@ -99,7 +97,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
         $paymentDto = new PaymentDto(
             payment_id: 123
         );
-
         $this->logger
             ->expects($this->once())
             ->method('info')
@@ -107,7 +104,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
                 'shop' => 'test-shop',
                 'payment_id' => 123,
             ]);
-
         $this->messageBus
             ->expects($this->once())
             ->method('dispatch')
@@ -118,9 +114,10 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
             }))
             ->willReturn(new Envelope(new \stdClass()));
 
-        // Act & Assert
+        // Act
         $response = $this->controller->deletePaymentAction($shopContext, $paymentDto);
 
+        // Assert
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
@@ -129,7 +126,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
     {
         // Arrange
         $shopContext = new ShopContextDto('test-shop', 'en_US');
-
         $paymentDto = new PaymentDto(
             payment_id: 123,
             name: 'updated-payment',
@@ -139,14 +135,13 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
             title: 'Updated Payment',
             description: 'Updated description'
         );
-
         $this->messageBus
             ->expects($this->once())
             ->method('dispatch')
             ->with($this->callback(function ($message) {
                 return $message instanceof UpdatePaymentMessage
                     && $message->getShopCode() === 'test-shop'
-                    && $message->getPaymentId() === 123; // Zmienione na int zamiast string
+                    && $message->getPaymentId() === 123;
             }))
             ->willReturn(new Envelope(new \stdClass()));
 
@@ -162,7 +157,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
     {
         // Arrange
         $shopContext = new ShopContextDto('test-shop', 'en_US');
-
         $paymentDto = new PaymentDto(
             name: 'new-payment',
             visible: true,
@@ -172,7 +166,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
             description: 'New payment description',
             locale: 'en_US'
         );
-
         $this->logger
             ->expects($this->once())
             ->method('info')
@@ -182,7 +175,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
                 'active' => true,
                 'locale' => 'en_US'
             ]);
-
         $this->messageBus
             ->expects($this->once())
             ->method('dispatch')

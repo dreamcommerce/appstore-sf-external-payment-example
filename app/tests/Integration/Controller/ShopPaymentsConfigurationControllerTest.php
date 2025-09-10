@@ -6,7 +6,9 @@ use App\Security\HashValidator;
 use App\Service\OAuth\Authentication\AuthenticationServiceInterface;
 use App\Service\OAuth\OAuthService;
 use App\Service\Payment\PaymentServiceInterface;
+use App\Service\Payment\Util\CurrencyHelper;
 use App\Service\Persistence\ShopPersistenceServiceInterface;
+use App\Service\Shop\ShopContextService;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
@@ -46,7 +48,6 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
         };
         $container->set(HashValidator::class, $mockHashValidator);
 
-        // Mock services involved in circular dependency using Mockery
         $authService = Mockery::mock(AuthenticationServiceInterface::class);
         $shopPersistenceService = Mockery::mock(ShopPersistenceServiceInterface::class);
         $oAuthService = Mockery::mock(OAuthService::class);
@@ -75,7 +76,7 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
             ->willReturn(new Envelope(new \stdClass()));
         $container->set('messenger.bus.default', $mockMessageBus);
 
-        $mockShopContextService = $this->getMockBuilder(\App\Service\Shop\ShopContextService::class)
+        $mockShopContextService = $this->getMockBuilder(ShopContextService::class)
             ->disableOriginalConstructor()
             ->getMock();
         $mockShopContextService->method('getShopAndClient')
@@ -84,9 +85,9 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
                 'oauthShop' => new \stdClass(),
                 'shopEntity' => new \stdClass()
             ]);
-        $container->set(\App\Service\Shop\ShopContextService::class, $mockShopContextService);
+        $container->set(ShopContextService::class, $mockShopContextService);
 
-        $mockCurrencyHelper = $this->getMockBuilder(\App\Service\Payment\Util\CurrencyHelper::class)
+        $mockCurrencyHelper = $this->getMockBuilder(CurrencyHelper::class)
             ->disableOriginalConstructor()
             ->getMock();
         $mockCurrencyHelper->method('getAllCurrencies')
@@ -103,7 +104,7 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
                 ['currency_id' => 2, 'name' => 'US Dollar', 'code' => 'USD'],
                 ['currency_id' => 3, 'name' => 'Euro', 'code' => 'EUR']
             ]);
-        $container->set(\App\Service\Payment\Util\CurrencyHelper::class, $mockCurrencyHelper);
+        $container->set(CurrencyHelper::class, $mockCurrencyHelper);
     }
 
     private function generateAuthParams(array $additionalParams = []): array
@@ -159,17 +160,15 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
     public function testPaymentSettings(): void
     {
-        // When
+        // Arrange & Act
         $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-        // When
         $queryString = http_build_query($authParams);
-        // When
         $this->client->request(
             'GET',
             '/app-store/view/payments-configuration?' . $queryString
         );
 
-        // Then
+        // Assert
         $this->assertEquals(
             Response::HTTP_OK,
             $this->client->getResponse()->getStatusCode(),

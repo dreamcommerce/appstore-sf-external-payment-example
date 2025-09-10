@@ -7,7 +7,6 @@ use App\Exception\Payment\TemporaryPaymentApiException;
 use App\Messenger\Middleware\ApiExceptionMiddleware;
 use App\Service\Exception\ApiExceptionClassifier;
 use DreamCommerce\Component\ShopAppstore\Api\Exception\ApiException;
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Envelope;
@@ -27,10 +26,9 @@ class ApiExceptionMiddlewareTest extends TestCase
         $this->middleware = new ApiExceptionMiddleware($this->exceptionClassifier, $this->logger);
     }
 
-    #[Test]
-    public function itHandlesTemporaryApiExceptionCorrectly(): void
+    public function testItHandlesTemporaryApiExceptionCorrectly(): void
     {
-        //Given
+        // Arrange
         $envelope = new Envelope(new TestMessage('shop123'));
         $stack = $this->createFailingStackWithException(
             new ApiException('Service temporarily unavailable', 503)
@@ -41,22 +39,19 @@ class ApiExceptionMiddlewareTest extends TestCase
         $this->logger
             ->expects($this->once())
             ->method('error');
-        //When
+        // Act & Assert
         try {
             $this->middleware->handle($envelope, $stack);
-            //Then
             $this->fail('TemporaryPaymentApiException was not thrown');
         } catch (TemporaryPaymentApiException $e) {
-            //Then
             $this->assertInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString('Service temporarily unavailable', $e->getMessage());
         }
     }
 
-    #[Test]
-    public function itHandlesPermanentApiExceptionCorrectly(): void
+    public function testItHandlesPermanentApiExceptionCorrectly(): void
     {
-        //Given
+        // Arrange
         $envelope = new Envelope(new TestMessage('shop123'));
         $stack = $this->createFailingStackWithException(
             new ApiException('Invalid payment data', 400)
@@ -67,23 +62,20 @@ class ApiExceptionMiddlewareTest extends TestCase
         $this->logger
             ->expects($this->once())
             ->method('error');
-        //When
+        // Act & Assert
         try {
             $this->middleware->handle($envelope, $stack);
-            //Then
             $this->fail('PaymentApiException was not thrown');
         } catch (PaymentApiException $e) {
-            //Then
             $this->assertInstanceOf(PaymentApiException::class, $e);
             $this->assertNotInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString('Invalid payment data', $e->getMessage());
         }
     }
 
-    #[Test]
-    public function itHandlesNestedApiExceptionInHandlerFailedException(): void
+    public function testItHandlesNestedApiExceptionInHandlerFailedException(): void
     {
-        //Given
+        // Arrange
         $envelope = new Envelope(new TestMessage('shop123'));
         $apiException = new ApiException('Gateway timeout', 504);
         $handlerException = new HandlerFailedException(
@@ -97,22 +89,19 @@ class ApiExceptionMiddlewareTest extends TestCase
         $this->logger
             ->expects($this->once())
             ->method('error');
-        //When
+        // Act & Assert
         try {
             $this->middleware->handle($envelope, $stack);
-            //Then
             $this->fail('TemporaryPaymentApiException was not thrown');
         } catch (TemporaryPaymentApiException $e) {
-            //Then
             $this->assertInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString('Gateway timeout', $e->getMessage());
         }
     }
 
-    #[Test]
-    public function itExtractsShopCodeFromMessage(): void
+    public function testItExtractsShopCodeFromMessage(): void
     {
-        //Given
+        // Arrange
         $shopCode = 'test-shop-123';
         $envelope = new Envelope(new TestMessage($shopCode));
         $stack = $this->createFailingStackWithException(
@@ -127,14 +116,14 @@ class ApiExceptionMiddlewareTest extends TestCase
             ->with(
                 $this->anything(),
                 $this->callback(function (array $context) {
-                    //Then
+                    // Assert
                     return isset($context['message_class'], $context['error_message'], $context['error_code'])
                         && $context['message_class'] === TestMessage::class
                         && $context['error_message'] === 'Service unavailable'
                         && $context['error_code'] === 503;
                 })
             );
-        //When
+        // Act & Assert
         $this->expectException(TemporaryPaymentApiException::class);
         $this->middleware->handle($envelope, $stack);
     }

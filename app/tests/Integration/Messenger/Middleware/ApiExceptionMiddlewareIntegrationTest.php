@@ -29,19 +29,17 @@ class ApiExceptionMiddlewareIntegrationTest extends TestCase
     #[DataProvider('temporaryCodesProvider')]
     public function testTemporaryCodesAreClassifiedCorrectly(int $code): void
     {
-        //Given
+        // Arrange
         $message = new TestPaymentMessage('shop123');
         $envelope = new Envelope($message);
         $stack = $this->createFailingStackWithException(
             new ApiException("Test error with code $code", $code)
         );
-        //When
+        // Act & Assert
         try {
             $this->middleware->handle($envelope, $stack);
-            //Then
             $this->fail('TemporaryPaymentApiException was not thrown');
         } catch (TemporaryPaymentApiException $e) {
-            //Then
             $this->assertInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString((string)$code, $e->getMessage());
         }
@@ -55,19 +53,17 @@ class ApiExceptionMiddlewareIntegrationTest extends TestCase
     #[DataProvider('permanentCodesProvider')]
     public function testPermanentCodesAreClassifiedCorrectly(int $code): void
     {
-        //Given
+        // Arrange
         $message = new TestPaymentMessage('shop123');
         $envelope = new Envelope($message);
         $stack = $this->createFailingStackWithException(
             new ApiException("Test error with code $code", $code)
         );
-        //When
+        // Act & Assert
         try {
             $this->middleware->handle($envelope, $stack);
-            //Then
             $this->fail('PaymentApiException was not thrown');
         } catch (PaymentApiException $e) {
-            //Then
             $this->assertInstanceOf(PaymentApiException::class, $e);
             $this->assertNotInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString($code, $e->getMessage());
@@ -82,19 +78,17 @@ class ApiExceptionMiddlewareIntegrationTest extends TestCase
     #[DataProvider('temporaryMessagesProvider')]
     public function testTemporaryMessagesAreClassifiedCorrectly(string $errorMessage): void
     {
-        //Given
+        // Arrange
         $message = new TestPaymentMessage('shop123');
         $envelope = new Envelope($message);
         $stack = $this->createFailingStackWithException(
             new ApiException($errorMessage, 400)
         );
-        //When
+        // Act & Assert
         try {
             $this->middleware->handle($envelope, $stack);
-            //Then
             $this->fail('TemporaryPaymentApiException was not thrown');
         } catch (TemporaryPaymentApiException $e) {
-            //Then
             $this->assertInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString($errorMessage, $e->getMessage());
         }
@@ -113,19 +107,17 @@ class ApiExceptionMiddlewareIntegrationTest extends TestCase
     #[DataProvider('permanentMessagesProvider')]
     public function testPermanentMessagesAreClassifiedCorrectly(string $errorMessage): void
     {
-        //Given
+        // Arrange
         $message = new TestPaymentMessage('shop123');
         $envelope = new Envelope($message);
         $stack = $this->createFailingStackWithException(
             new ApiException($errorMessage, 400)
         );
-        //When
+        // Act & Assert
         try {
             $this->middleware->handle($envelope, $stack);
-            //Then
             $this->fail('PaymentApiException was not thrown');
         } catch (PaymentApiException $e) {
-            //Then
             $this->assertInstanceOf(PaymentApiException::class, $e);
             $this->assertNotInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString($errorMessage, $e->getMessage());
