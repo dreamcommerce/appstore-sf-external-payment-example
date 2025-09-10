@@ -32,4 +32,9 @@ interface PaymentServiceInterface
      * Retrieves payment details by ID
      */
     public function getPaymentById(string $shopCode, int $paymentId, string $locale): ?array;
+
+    /**
+     * Removes all payment methods for a shop
+     */
+    public function removeAllForShop(string $shopCode): void;
 }
