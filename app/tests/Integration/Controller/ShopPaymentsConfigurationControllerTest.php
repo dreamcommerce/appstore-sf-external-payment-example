@@ -3,11 +3,15 @@
 namespace App\Tests\Integration\Controller;
 
 use App\Security\HashValidator;
+use App\Service\OAuth\Authentication\AuthenticationServiceInterface;
+use App\Service\OAuth\OAuthService;
 use App\Service\Payment\PaymentServiceInterface;
 use App\Service\Payment\Util\CurrencyHelper;
+use App\Service\Persistence\ShopPersistenceServiceInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
+use Mockery;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -43,6 +47,15 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
         };
         $container->set(HashValidator::class, $mockHashValidator);
 
+        // Mock services involved in circular dependency using Mockery
+        $authService = Mockery::mock(AuthenticationServiceInterface::class);
+        $shopPersistenceService = Mockery::mock(ShopPersistenceServiceInterface::class);
+        $oAuthService = Mockery::mock(OAuthService::class);
+
+        $container->set(AuthenticationServiceInterface::class, $authService);
+        $container->set(ShopPersistenceServiceInterface::class, $shopPersistenceService);
+        $container->set(OAuthService::class, $oAuthService);
+
         $mockPaymentService = $this->createMock(PaymentServiceInterface::class);
         $mockPaymentService->method('getPaymentSettingsForShop')
             ->willReturn([
@@ -53,7 +66,7 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
                     'active' => true,
                     'currencies' => [1, 2, 3],
                     'title' => 'Test Payment',
-                    'description' => 'Test description'
+                    'description' => 'Test description',
                 ]
             ]);
         $container->set(PaymentServiceInterface::class, $mockPaymentService);
@@ -69,7 +82,8 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
         $mockShopContextService->method('getShopAndClient')
             ->willReturn([
                 'shopClient' => new \stdClass(),
-                'oauthShop' => new \stdClass()
+                'oauthShop' => new \stdClass(),
+                'shopEntity' => new \stdClass()
             ]);
         $container->set(\App\Service\Shop\ShopContextService::class, $mockShopContextService);
 

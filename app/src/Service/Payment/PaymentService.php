@@ -8,10 +8,10 @@ use App\Dto\PaymentDto;
 use App\Entity\ShopAppInstallation;
 use App\Service\Payment\Util\CurrencyHelper;
 use App\Service\Shop\ShopContextService;
-use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\PaymentResource;
+use App\Repository\ShopPaymentMethodRepositoryInterface;
 use App\Service\Persistence\PaymentMethodPersistenceServiceInterface;
-use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
+use Psr\Log\LoggerInterface;
 
 /**
  * Service responsible for handling payment operations
@@ -21,21 +21,27 @@ class PaymentService implements PaymentServiceInterface
     private CurrencyHelper $currencyHelper;
     private ShopContextService $shopContextService;
     private PaymentMethodPersistenceServiceInterface $paymentMethodPersistenceService;
+    private LoggerInterface $logger;
+    private ShopPaymentMethodRepositoryInterface $shopPaymentMethodRepository;
 
     public function __construct(
         CurrencyHelper $currencyHelper,
         ShopContextService $shopContextService,
-        PaymentMethodPersistenceServiceInterface $paymentMethodPersistenceService
+        PaymentMethodPersistenceServiceInterface $paymentMethodPersistenceService,
+        ShopPaymentMethodRepositoryInterface $shopPaymentMethodRepository,
+        LoggerInterface $logger
     ) {
         $this->currencyHelper = $currencyHelper;
         $this->shopContextService = $shopContextService;
         $this->paymentMethodPersistenceService = $paymentMethodPersistenceService;
+        $this->shopPaymentMethodRepository = $shopPaymentMethodRepository;
+        $this->logger = $logger;
     }
 
     public function createPayment(ShopAppInstallation $shop, string $name, array $translations, array $currencies = [], array $supportedCurrencies = []): void
     {
         $shopData = $this->getShopDataOrThrow($shop->getShop());
-        
+
         if (empty($supportedCurrencies) || !empty($currencies)) {
             $supportedCurrencies = $this->currencyHelper->mapCurrencyIdsToSupportedCurrencies(
                 $shopData['shopClient'],
@@ -43,7 +49,7 @@ class PaymentService implements PaymentServiceInterface
                 $currencies
             );
         }
-        
+
         $paymentData = [
             'currencies' => $currencies,
             'name' => $name,
@@ -60,7 +66,7 @@ class PaymentService implements PaymentServiceInterface
     {
         $shopData = $this->getShopDataOrThrow($shopCode);
         $paymentResource = new PaymentResource($shopData['shopClient']);
-        
+
         $paymentResource->update($shopData['oauthShop'], $paymentId, $data);
     }
 
@@ -118,7 +124,7 @@ class PaymentService implements PaymentServiceInterface
         if (!$payment) {
             return null;
         }
-        
+
         $data = $payment->getData();
 
         if (isset($data['currencies']) && is_array($data['currencies'])) {
@@ -145,5 +151,34 @@ class PaymentService implements PaymentServiceInterface
             throw new \RuntimeException(sprintf('Shop %s not found', $shopCode));
         }
         return $shopData;
+    }
+
+    public function removeAllForShop(string $shopCode): void
+    {
+        $shopData = $this->shopContextService->getShopAndClient($shopCode);
+        if (!$shopData) {
+            throw new \RuntimeException('Shop not found for code: ' . $shopCode);
+        }
+
+        $shopInstallation = $shopData['shopEntity'] ?? null;
+        if (!$shopInstallation instanceof ShopAppInstallation) {
+            throw new \RuntimeException('Shop installation not found for code: ' . $shopCode);
+        }
+
+        $paymentMethods = $this->shopPaymentMethodRepository->findBy([
+            'shop' => $shopInstallation
+        ]);
+
+        foreach ($paymentMethods as $paymentMethod) {
+            try {
+                $this->deletePayment($shopCode, $paymentMethod->getPaymentMethodId());
+            } catch (\Throwable $e) {
+                $this->logger->error('Failed to delete payment method during shop uninstall', [
+                    'shop_code' => $shopCode,
+                    'payment_method_id' => $paymentMethod->getPaymentMethodId(),
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
     }
 }
