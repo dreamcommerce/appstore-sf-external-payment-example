@@ -41,6 +41,8 @@ class ShopPaymentMethodController extends AbstractController
 
         try {
             $callback = null;
+            $shopUrl = null;
+            $paymentMethodId = null;
 
             if ($request->getMethod() === 'GET') {
                 $shopUrl = $request->query->get('shopUrl');
@@ -54,6 +56,15 @@ class ShopPaymentMethodController extends AbstractController
                 } catch (JsonException $e) {
                     $shopUrl = $request->request->get('shopUrl');
                     $paymentMethodId = $request->request->get('paymentMethodId');
+                }
+            }
+
+            if (is_numeric($paymentMethodId)) {
+                $filteredValue = filter_var($paymentMethodId, FILTER_VALIDATE_INT);
+                if ($filteredValue !== false) {
+                    $paymentMethodId = $filteredValue;
+                } else {
+                    $this->logger->debug('Invalid payment method ID format', ['value' => $paymentMethodId]);
                 }
             }
 
@@ -124,7 +135,6 @@ class ShopPaymentMethodController extends AbstractController
             return null;
         }
 
-        // Remove protocol if present
         return preg_replace('#^https?://#', '', $url);
     }
 

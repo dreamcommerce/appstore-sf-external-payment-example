@@ -142,8 +142,6 @@ class AppStoreEventProcessorTest extends TestCase
 
     public function testHandleMultipleEventsInSequence(): void
     {
-        // Test that the processor can handle multiple events correctly
-
         // 1. Install Event
         $installEvent = new AppStoreLifecycleEvent(
             action: AppStoreLifecycleAction::INSTALL,
