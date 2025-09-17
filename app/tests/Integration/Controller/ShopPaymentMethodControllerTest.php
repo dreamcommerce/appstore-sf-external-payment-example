@@ -45,16 +45,15 @@ final class ShopPaymentMethodControllerTest extends WebTestCase
 
         $testPaymentMethod = new ShopPaymentMethod(
             $testShop,
-            123 // payment method ID as integer
+            123
         );
 
-        $shopRepository = $this->getMockBuilder(\App\Repository\ShopAppInstallationRepository::class)
-            ->disableOriginalConstructor()
+        $shopRepository = $this->getMockBuilder(ShopAppInstallationRepositoryInterface::class)
             ->getMock();
             
-        $shopRepository->method('findOneBy')
-            ->willReturnCallback(function($criteria) use ($testShop) {
-                if (isset($criteria['shopUrl']) && $criteria['shopUrl'] === 'integration-test.example.com') {
+        $shopRepository->method('findOneByShopUrl')
+            ->willReturnCallback(function($shopUrl) use ($testShop) {
+                if ($shopUrl === 'integration-test.example.com') {
                     return $testShop;
                 }
                 return null;
@@ -126,16 +125,13 @@ final class ShopPaymentMethodControllerTest extends WebTestCase
         // Arrange & Act
         $this->client->request(
             'GET',
-            '/api/shop/payment-methods/verify',
-            [
-                'shopUrl' => 'non-existent-shop.example.com',
-                'paymentMethodId' => 999
-            ]
+            '/api/shop/payment-methods/verify?shopUrl=nonexistent.example.com&paymentMethodId=123'
         );
 
         // Assert
         $this->assertEquals(Response::HTTP_NOT_FOUND, $this->client->getResponse()->getStatusCode());
         $responseData = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertFalse($responseData['isSupported']);
         $this->assertEquals('Shop not found', $responseData['error']);
     }
 
@@ -147,11 +143,7 @@ final class ShopPaymentMethodControllerTest extends WebTestCase
         // Arrange & Act
         $this->client->request(
             'GET',
-            '/api/shop/payment-methods/verify',
-            [
-                'shopUrl' => 'integration-test.example.com',
-                'paymentMethodId' => 999
-            ]
+            '/api/shop/payment-methods/verify?shopUrl=integration-test.example.com&paymentMethodId=999'
         );
 
         // Assert
@@ -169,11 +161,7 @@ final class ShopPaymentMethodControllerTest extends WebTestCase
         // Arrange & Act
         $this->client->request(
             'GET',
-            '/api/shop/payment-methods/verify',
-            [
-                'shopUrl' => 'integration-test.example.com',
-                'paymentMethodId' => 123
-            ]
+            '/api/shop/payment-methods/verify?shopUrl=integration-test.example.com&paymentMethodId=123'
         );
 
         // Assert
@@ -191,26 +179,34 @@ final class ShopPaymentMethodControllerTest extends WebTestCase
         // Arrange & Act
         $this->client->request(
             'GET',
-            '/api/shop/payment-methods/verify',
-            [
-                'shopUrl' => 'integration-test.example.com',
-                'paymentMethodId' => 123,
-                'callback' => 'testCallback'
-            ]
+            '/api/shop/payment-methods/verify?shopUrl=integration-test.example.com&paymentMethodId=123&callback=testCallback'
         );
 
-        // Assert
-        $this->assertEquals(Response::HTTP_OK, $this->client->getResponse()->getStatusCode());
-        $this->assertEquals('application/javascript', $this->client->getResponse()->headers->get('Content-Type'));
-        $response = $this->client->getResponse()->getContent();
-        $this->assertStringStartsWith('testCallback(', $response);
-        $this->assertStringEndsWith(');', $response);
+        $response = $this->client->getResponse();
+        $this->assertEquals(Response::HTTP_OK, $response->getStatusCode());
+        $this->assertStringContainsString('application/javascript', $response->headers->get('Content-Type'));
+        
+        $content = $response->getContent();
+        $this->assertIsString($content, 'Response content should be a string');
+        
+        $this->assertStringStartsWith('testCallback(', $content, 'Response should start with the callback function');
+        $this->assertStringEndsWith(');', $content, 'Response should end with closing parenthesis and semicolon');
+        
+        $jsonStart = strpos($content, '(') + 1;
+        $jsonEnd = strrpos($content, ')');
+        $json = trim(substr($content, $jsonStart, $jsonEnd - $jsonStart));
 
-        $jsonContent = substr($response, strlen('testCallback('), -2);
-        $responseData = json_decode($jsonContent, true);
-
-        $this->assertTrue($responseData['isSupported']);
-        $this->assertEquals('test-shop-integration', $responseData['shopCode']);
+        $responseData = json_decode($json, true);
+        
+        $this->assertNotNull($responseData, 'Failed to decode JSON: ' . json_last_error_msg());
+        $this->assertIsArray($responseData, 'Decoded response should be an array');
+        
+        $this->assertArrayHasKey('isSupported', $responseData, 'Response should contain isSupported key');
+        $this->assertArrayHasKey('shopCode', $responseData, 'Response should contain shopCode key');
+        
+        // Assert the values
+        $this->assertTrue($responseData['isSupported'], 'Payment method should be supported');
+        $this->assertEquals('test-shop-integration', $responseData['shopCode'], 'Shop code should match');
     }
 
     /**
@@ -218,17 +214,20 @@ final class ShopPaymentMethodControllerTest extends WebTestCase
      */
     public function testVerifyEndpointWithPostMethod(): void
     {
-        // Arrange & Act
+        // Arrange
+        $data = [
+            'shopUrl' => 'integration-test.example.com',
+            'paymentMethodId' => 123
+        ];
+
+        // Act
         $this->client->request(
             'POST',
             '/api/shop/payment-methods/verify',
             [],
             [],
             ['CONTENT_TYPE' => 'application/json'],
-            json_encode([
-                'shopUrl' => 'integration-test.example.com',
-                'paymentMethodId' => 123
-            ])
+            json_encode($data)
         );
 
         // Assert

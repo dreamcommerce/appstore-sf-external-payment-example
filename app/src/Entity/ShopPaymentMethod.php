@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Repository\ShopPaymentMethodRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ShopPaymentMethodRepository::class)]
@@ -30,11 +32,15 @@ class ShopPaymentMethod
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $removedAt = null;
 
+    #[ORM\OneToMany(mappedBy: 'paymentMethod', targetEntity: Transaction::class, cascade: ['persist', 'remove'])]
+    private Collection $transactions;
+
     public function __construct(ShopAppInstallation $shop, int $paymentMethodId)
     {
         $this->shop = $shop;
         $this->paymentMethodId = $paymentMethodId;
         $this->createdAt = new \DateTimeImmutable();
+        $this->transactions = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -66,5 +72,25 @@ class ShopPaymentMethod
     {
         $this->removedAt = $removedAt;
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Transaction>
+     */
+    public function getTransactions(): Collection
+    {
+        return $this->transactions;
+    }
+
+    public function addTransaction(Transaction $transaction): void
+    {
+        if (!$this->transactions->contains($transaction)) {
+            $this->transactions->add($transaction);
+        }
+    }
+
+    public function removeTransaction(Transaction $transaction): void
+    {
+        $this->transactions->removeElement($transaction);
     }
 }

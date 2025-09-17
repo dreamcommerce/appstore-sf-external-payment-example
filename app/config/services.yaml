@@ -29,6 +29,17 @@ services:
     App\Service\OAuth\Authentication\AuthenticationService:
         arguments:
             $logger: '@monolog.logger'
+    App\Messenger\Middleware\ApiExceptionMiddleware:
+      tags: [{ name: 'messenger.bus_middleware', bus: 'messenger.bus.default', priority: 100 }]
+
+    App\EventListener\CorsOptionsRequestListener:
+      tags:
+        - { name: kernel.event_subscriber }
+
+    App\Service\Payment\WebhookSignatureVerifier:
+        arguments:
+            $appstoreSecret: '%env(APPSTORE_APP_SECRET)%'
+            $logger: '@monolog.logger'
 
     # Registration of external services
     DreamCommerce\Component\Common\Http\GuzzleClient:
@@ -40,13 +51,3 @@ services:
             $appId: '%env(APP_CLIENT)%'
             $appSecret: '%env(APP_SECRET)%'
             $appstoreSecret: '%env(APPSTORE_APP_SECRET)%'
-
-    App\Messenger\Middleware\ApiExceptionMiddleware:
-        tags: [{ name: 'messenger.bus_middleware', bus: 'messenger.bus.default', priority: 100 }]
-
-    App\EventListener\CorsOptionsRequestListener:
-        tags:
-            - { name: kernel.event_subscriber }
-
-parameters:
-    external_payment.gateway_url: 'https://payment-gateway.example.com/payment'

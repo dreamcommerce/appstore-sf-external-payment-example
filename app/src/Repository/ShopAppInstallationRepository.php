@@ -32,4 +32,14 @@ class ShopAppInstallationRepository extends ServiceEntityRepository implements S
             $em->flush();
         }
     }
+
+    public function findOneByShopLicense(string $shopLicense): ?ShopAppInstallation
+    {
+        return $this->findOneBy(['shop' => $shopLicense]);
+    }
+
+    public function findOneByShopUrl(string $shopUrl): ?ShopAppInstallation
+    {
+        return $this->findOneBy(['shopUrl' => $shopUrl]);
+    }
 }

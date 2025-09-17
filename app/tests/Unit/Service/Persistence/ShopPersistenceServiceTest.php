@@ -166,8 +166,8 @@ class ShopPersistenceServiceTest extends TestCase
 
         $this->shopAppInstallationRepository
             ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['shop' => 'test-shop-id'])
+            ->method('findOneByShopLicense')
+            ->with('test-shop-id')
             ->willReturn($shopInstallation);
 
         $shopInstallation
@@ -193,8 +193,8 @@ class ShopPersistenceServiceTest extends TestCase
 
         $this->shopAppInstallationRepository
             ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['shop' => 'non-existent-shop-id'])
+            ->method('findOneByShopLicense')
+            ->with('non-existent-shop-id')
             ->willReturn(null);
 
         $this->logger
@@ -221,8 +221,8 @@ class ShopPersistenceServiceTest extends TestCase
 
         $this->shopAppInstallationRepository
             ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['shop' => $shopId])
+            ->method('findOneByShopLicense')
+            ->with($shopId)
             ->willReturn($shopInstallation);
 
         $this->paymentService
@@ -255,8 +255,8 @@ class ShopPersistenceServiceTest extends TestCase
 
         $this->shopAppInstallationRepository
             ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['shop' => $shopId])
+            ->method('findOneByShopLicense')
+            ->with($shopId)
             ->willReturn(null);
 
         $this->logger
@@ -289,8 +289,8 @@ class ShopPersistenceServiceTest extends TestCase
 
         $this->shopAppInstallationRepository
             ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['shop' => $shopId])
+            ->method('findOneByShopLicense')
+            ->with($shopId)
             ->willReturn($shopInstallation);
 
         $this->paymentService
@@ -321,8 +321,8 @@ class ShopPersistenceServiceTest extends TestCase
 
         $this->shopAppInstallationRepository
             ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['shop' => $shopId])
+            ->method('findOneByShopLicense')
+            ->with($shopId)
             ->willReturn($shopInstallation);
 
         $this->paymentService

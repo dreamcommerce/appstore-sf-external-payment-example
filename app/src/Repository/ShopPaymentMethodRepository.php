@@ -9,7 +9,7 @@ use App\Entity\ShopPaymentMethod;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-final class ShopPaymentMethodRepository extends ServiceEntityRepository implements ShopPaymentMethodRepositoryInterface
+class ShopPaymentMethodRepository extends ServiceEntityRepository implements ShopPaymentMethodRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {

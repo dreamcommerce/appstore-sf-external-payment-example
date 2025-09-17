@@ -28,8 +28,7 @@ class ShopPaymentMethodControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->shopRepository = $this->getMockBuilder(\App\Repository\ShopAppInstallationRepository::class)
-            ->disableOriginalConstructor()
+        $this->shopRepository = $this->getMockBuilder(ShopAppInstallationRepositoryInterface::class)
             ->getMock();
         $this->paymentMethodRepository = $this->createMock(ShopPaymentMethodRepositoryInterface::class);
         $this->logger = $this->createMock(LoggerInterface::class);
@@ -126,8 +125,8 @@ class ShopPaymentMethodControllerTest extends TestCase
 
         $this->shopRepository
             ->expects($this->once())
-            ->method('findOneBy')
-            ->with(['shopUrl' => 'example.com'])
+            ->method('findOneByShopUrl')
+            ->with('example.com')
             ->willReturn(null);
 
         $this->logger
@@ -157,7 +156,8 @@ class ShopPaymentMethodControllerTest extends TestCase
 
         $this->shopRepository
             ->expects($this->once())
-            ->method('findOneBy')
+            ->method('findOneByShopUrl')
+            ->with('example.com')
             ->willReturn($shop);
 
         $this->paymentMethodRepository
@@ -189,7 +189,8 @@ class ShopPaymentMethodControllerTest extends TestCase
 
         $this->shopRepository
             ->expects($this->once())
-            ->method('findOneBy')
+            ->method('findOneByShopUrl')
+            ->with('example.com')
             ->willReturn($shop);
 
         $this->paymentMethodRepository
@@ -221,7 +222,8 @@ class ShopPaymentMethodControllerTest extends TestCase
 
         $this->shopRepository
             ->expects($this->once())
-            ->method('findOneBy')
+            ->method('findOneByShopUrl')
+            ->with('example.com')
             ->willReturn($shop);
 
         $this->paymentMethodRepository
