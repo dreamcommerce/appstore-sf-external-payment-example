@@ -6,10 +6,16 @@ namespace App\Factory;
 
 use App\Entity\ShopAppInstallation;
 use App\Entity\ShopAppToken;
+use App\Service\Helper\DateTimeHelper;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 
 class ShopAppInstallationFactory
 {
+    public function __construct(
+        private readonly DateTimeHelper $dateTimeHelper
+    ) {
+    }
+
     public function fromOAuthShop(OAuthShop $shop, string $authCode): ShopAppInstallation
     {
         $uri = $shop->getUri();
@@ -29,7 +35,7 @@ class ShopAppInstallationFactory
             $shopAppInstallation,
             $tokenData['access_token'],
             $tokenData['refresh_token'],
-            new \DateTimeImmutable($tokenData['expires_at']),
+            $this->dateTimeHelper->createFromString($tokenData['expires_at']),
             true
         );
     }

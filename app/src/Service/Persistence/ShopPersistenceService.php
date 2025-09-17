@@ -68,7 +68,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
     public function updateShopToken(OAuthShop $shop): void
     {
         $shopId = (string)$shop->getId();
-        $shopAppInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
+        $shopAppInstallation = $this->shopAppInstallationRepository->findOneByShopLicense($shopId);
 
         if (!$shopAppInstallation) {
             $this->logger->warning('Cannot update token: Shop not found', [
@@ -97,7 +97,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
     public function updateApplicationVersion(OAuthShop $OAuthShop, Shop $shop): void
     {
         $shopId = (string)$OAuthShop->getId();
-        $shopAppInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
+        $shopAppInstallation = $this->shopAppInstallationRepository->findOneByShopLicense($shopId);
 
         if (!$shopAppInstallation) {
             $this->logger->warning('Cannot update application version: Shop not found', [
@@ -113,7 +113,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
 
     public function uninstallShop(string $shopId, string $shopUrl): void
     {
-        $shopInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
+        $shopInstallation = $this->shopAppInstallationRepository->findOneByShopLicense($shopId);
         
         if (!$shopInstallation) {
             $this->logger->warning('Shop installation not found during uninstall', [

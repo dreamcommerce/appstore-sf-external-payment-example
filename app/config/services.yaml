@@ -39,10 +39,6 @@ services:
         arguments:
             $handlers: !tagged_iterator { tag: 'app.exception_handler', default_priority_method: '' }
 
-    App\EventListener\CorsOptionsRequestListener:
-      tags:
-        - { name: kernel.event_subscriber }
-
     # Messenger middlewares configuration
     App\Messenger\Middleware\ApiExceptionMiddleware:
         arguments:
@@ -69,6 +65,14 @@ services:
             $logger: '@monolog.logger'
     App\Service\OAuth\Authentication\AuthenticationService:
         arguments:
+            $logger: '@monolog.logger'
+    App\EventListener\CorsOptionsRequestListener:
+      tags:
+        - { name: kernel.event_subscriber }
+
+    App\Service\Payment\WebhookSignatureVerifier:
+        arguments:
+            $appstoreSecret: '%env(APPSTORE_APP_SECRET)%'
             $logger: '@monolog.logger'
 
     # Registration of external services

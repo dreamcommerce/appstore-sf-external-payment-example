@@ -67,7 +67,7 @@ class ShopPaymentMethodController extends AbstractController
                     $this->logger->debug('Invalid payment method ID format', ['value' => $paymentMethodId]);
                 }
             }
-
+            
             $shopUrl = $this->normalizeShopUrl($shopUrl);
             if (!$shopUrl || !$paymentMethodId) {
                 return $this->createCorsResponse([
@@ -79,7 +79,7 @@ class ShopPaymentMethodController extends AbstractController
                 ], Response::HTTP_BAD_REQUEST);
             }
 
-            $shop = $this->shopRepository->findOneBy(['shopUrl' => $shopUrl]);
+            $shop = $this->shopRepository->findOneByShopUrl($shopUrl);
             if (!$shop) {
                 $this->logger->warning(
                     'Shop not found by URL',

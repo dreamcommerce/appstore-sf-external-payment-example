@@ -12,6 +12,10 @@ security:
             pattern: ^/api/shop/payment-methods/verify
             security: false
 
+        webhook:
+            pattern: ^/webhook
+            security: false
+
         main:
             lazy: true
             provider: appstore_user_provider
@@ -20,3 +24,4 @@ security:
 
     access_control:
         - { path: ^/api/shop/payment-methods/verify, roles: PUBLIC_ACCESS }
+        - { path: ^/webhook, roles: PUBLIC_ACCESS }
