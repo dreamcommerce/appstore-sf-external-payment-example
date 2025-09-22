@@ -4,6 +4,7 @@ namespace App\Tests\Integration\Controller;
 
 use App\Security\HashValidator;
 use App\Service\Payment\PaymentServiceInterface;
+use App\Service\Payment\Util\CurrencyHelper;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
@@ -72,7 +73,7 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
             ]);
         $container->set(\App\Service\Shop\ShopContextService::class, $mockShopContextService);
 
-        $mockCurrencyHelper = $this->getMockBuilder(\App\Service\Payment\Util\CurrencyHelper::class)
+        $mockCurrencyHelper = $this->getMockBuilder(CurrencyHelper::class)
             ->disableOriginalConstructor()
             ->getMock();
         $mockCurrencyHelper->method('getAllCurrencies')
@@ -89,7 +90,7 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
                 ['currency_id' => 2, 'name' => 'US Dollar', 'code' => 'USD'],
                 ['currency_id' => 3, 'name' => 'Euro', 'code' => 'EUR']
             ]);
-        $container->set(\App\Service\Payment\Util\CurrencyHelper::class, $mockCurrencyHelper);
+        $container->set(CurrencyHelper::class, $mockCurrencyHelper);
     }
 
     private function generateAuthParams(array $additionalParams = []): array
@@ -202,19 +203,20 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
     public function testEditPayment(): void
     {
-        // When
+        // Given
         $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-        // When
         $queryString = http_build_query($authParams);
+
         // When
         $paymentData = [
             'payment_id' => 1,
-            'name' => 'external',
             'visible' => false,
             'active' => true,
             'title' => 'Updated Payment',
             'description' => 'Updated description',
-            'currencies' => [1, 2, 3]
+            'currencies' => [1, 2, 3],
+            'name' => 'test-payment',
+            'locale' => $this->testLocale
         ];
 
         // When
@@ -245,18 +247,17 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
         // When
         $queryString = http_build_query($authParams);
         // When
-        $paymentData = [
-            'payment_id' => 1
+        $formData = [
+            'payment_id' => '1'
         ];
 
         // When
         $this->client->request(
             'POST',
             '/app-store/view/payments-configuration/delete?' . $queryString,
+            $formData,
             [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode($paymentData)
+            ['CONTENT_TYPE' => 'application/x-www-form-urlencoded']
         );
 
         // Then

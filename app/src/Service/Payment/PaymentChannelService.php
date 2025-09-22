@@ -47,6 +47,11 @@ class PaymentChannelService implements PaymentChannelServiceInterface
         $shopData = $this->getShopDataOrThrow($shopCode);
         $channelResource = new PaymentChannelResource($shopData['shopClient']);
         $channel = $channelResource->find($shopData['oauthShop'], $channelId, ['payment_id' => $paymentId]);
+        
+        if (!$channel) {
+            return null;
+        }
+        
         $data = $channel->getData();
         $channelData = ChannelData::fromArray($data);
         if (!$channelData->hasTranslationForLocale($locale)) {
@@ -56,6 +61,7 @@ class PaymentChannelService implements PaymentChannelServiceInterface
                 'locale' => $locale
             ]);
         }
+        
         return $channelData->toArray();
     }
 

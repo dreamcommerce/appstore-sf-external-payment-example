@@ -8,6 +8,7 @@ use App\Entity\ShopAppInstallation;
 use App\Entity\ShopPaymentMethod;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Uid\Uuid;
 
 final class ShopPaymentMethodRepository extends ServiceEntityRepository implements ShopPaymentMethodRepositoryInterface
 {
@@ -42,5 +43,14 @@ final class ShopPaymentMethodRepository extends ServiceEntityRepository implemen
             'paymentMethodId' => $paymentMethodId,
             'removedAt' => null
         ]);
+    }
+    
+    public function findOneById(string $id): ?ShopPaymentMethod
+    {
+        if (!Uuid::isValid($id)) {
+            return null;
+        }
+        
+        return $this->findOneBy(['id' => $id]);
     }
 }

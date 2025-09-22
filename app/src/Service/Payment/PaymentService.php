@@ -8,8 +8,10 @@ use App\Dto\PaymentDto;
 use App\Entity\ShopAppInstallation;
 use App\Service\Payment\Util\CurrencyHelper;
 use App\Service\Shop\ShopContextService;
+use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
 use DreamCommerce\Component\ShopAppstore\Api\Resource\PaymentResource;
 use App\Service\Persistence\PaymentMethodPersistenceServiceInterface;
+use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 
 /**
  * Service responsible for handling payment operations
@@ -30,18 +32,27 @@ class PaymentService implements PaymentServiceInterface
         $this->paymentMethodPersistenceService = $paymentMethodPersistenceService;
     }
 
-    public function createPayment(ShopAppInstallation $shop, string $name, array $translations, array $currencies, array $supportedCurrencies = []): void
+    public function createPayment(ShopAppInstallation $shop, string $name, array $translations, array $currencies = [], array $supportedCurrencies = []): void
     {
         $shopData = $this->getShopDataOrThrow($shop->getShop());
+        
+        if (empty($supportedCurrencies) || !empty($currencies)) {
+            $supportedCurrencies = $this->currencyHelper->mapCurrencyIdsToSupportedCurrencies(
+                $shopData['shopClient'],
+                $shopData['oauthShop'],
+                $currencies
+            );
+        }
+        
         $paymentData = [
             'currencies' => $currencies,
             'name' => $name,
             'translations' => $translations,
             'supportedCurrencies' => !empty($supportedCurrencies) ? $supportedCurrencies : ['PLN'],
         ];
+
         $paymentResource = new PaymentResource($shopData['shopClient']);
         $result = $paymentResource->insert($shopData['oauthShop'], $paymentData);
-
         $this->paymentMethodPersistenceService->persistPaymentMethod($shop, $result->getExternalId());
     }
 
@@ -49,6 +60,7 @@ class PaymentService implements PaymentServiceInterface
     {
         $shopData = $this->getShopDataOrThrow($shopCode);
         $paymentResource = new PaymentResource($shopData['shopClient']);
+        
         $paymentResource->update($shopData['oauthShop'], $paymentId, $data);
     }
 
@@ -58,7 +70,13 @@ class PaymentService implements PaymentServiceInterface
         $paymentResource = new PaymentResource($shopData['shopClient']);
         $paymentResource->delete($shopData['oauthShop'], $paymentId);
 
-        $this->paymentMethodPersistenceService->removePaymentMethod($shopData['shopEntity'], $paymentId);
+        $paymentMethod = $this->paymentMethodPersistenceService->findPaymentMethodByExternalId($paymentId);
+        if ($paymentMethod) {
+            $this->paymentMethodPersistenceService->removePaymentMethod(
+                $shopData['shopEntity'],
+                $paymentMethod->getPaymentMethodId()
+            );
+        }
     }
 
     public function getPaymentSettingsForShop(string $shopCode, string $locale): array
@@ -97,6 +115,10 @@ class PaymentService implements PaymentServiceInterface
         $shopData = $this->getShopDataOrThrow($shopCode);
         $paymentResource = new PaymentResource($shopData['shopClient']);
         $payment = $paymentResource->find($shopData['oauthShop'], $paymentId);
+        if (!$payment) {
+            return null;
+        }
+        
         $data = $payment->getData();
 
         if (isset($data['currencies']) && is_array($data['currencies'])) {
@@ -105,7 +127,7 @@ class PaymentService implements PaymentServiceInterface
             $data['currencies'] = [];
         }
 
-        $data['supportedCurrencies'] = isset($data['supportedCurrencies']) ? $data['supportedCurrencies'] : [];
+        $data['supportedCurrencies'] = $data['supportedCurrencies'] ?? [];
         return $data;
     }
 
@@ -119,8 +141,8 @@ class PaymentService implements PaymentServiceInterface
     private function getShopDataOrThrow(string $shopCode): array
     {
         $shopData = $this->shopContextService->getShopAndClient($shopCode);
-        if ($shopData === null) {
-            throw new \RuntimeException('Shop not found for code: ' . $shopCode);
+        if (!$shopData) {
+            throw new \RuntimeException(sprintf('Shop %s not found', $shopCode));
         }
         return $shopData;
     }

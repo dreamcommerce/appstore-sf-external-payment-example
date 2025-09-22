@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use App\Repository\ShopPaymentMethodRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: ShopPaymentMethodRepository::class)]
 #[ORM\Table(name: 'shop_payment_methods')]
@@ -13,9 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
 class ShopPaymentMethod
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    #[ORM\Column(type: 'string', length: 36, unique: true)]
+    private string $id;
 
     #[ORM\ManyToOne(targetEntity: ShopAppInstallation::class)]
     #[ORM\JoinColumn(name: 'shop_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
@@ -32,14 +32,20 @@ class ShopPaymentMethod
 
     public function __construct(ShopAppInstallation $shop, int $paymentMethodId)
     {
+        $this->id = Uuid::v4()->toRfc4122();
         $this->shop = $shop;
         $this->paymentMethodId = $paymentMethodId;
         $this->createdAt = new \DateTimeImmutable();
     }
 
-    public function getId(): ?int
+    public function getId(): string
     {
         return $this->id;
+    }
+    
+    public function getUuid(): Uuid
+    {
+        return Uuid::fromString($this->id);
     }
 
     public function getShop(): ShopAppInstallation
@@ -62,9 +68,8 @@ class ShopPaymentMethod
         return $this->removedAt;
     }
 
-    public function setRemovedAt(?\DateTimeImmutable $removedAt): self
+    public function setRemovedAt(?\DateTimeImmutable $removedAt): void
     {
         $this->removedAt = $removedAt;
-        return $this;
     }
 }

@@ -38,7 +38,8 @@ class PaymentMethodPersistenceService implements PaymentMethodPersistenceService
             $this->shopPaymentMethodRepository->save($removedMethod);
             $this->logger->info('Payment method reactivated', [
                 'shopId' => $shop->getId(),
-                'paymentMethodId' => $paymentMethodId
+                'paymentMethodId' => $paymentMethodId,
+                'paymentMethodUuid' => $removedMethod->getId()
             ]);
             return;
         }
@@ -47,7 +48,8 @@ class PaymentMethodPersistenceService implements PaymentMethodPersistenceService
         $this->shopPaymentMethodRepository->save($paymentMethod);
         $this->logger->info('Payment method persisted', [
             'shopId' => $shop->getId(),
-            'paymentMethodId' => $paymentMethodId
+            'paymentMethodId' => $paymentMethodId,
+            'paymentMethodUuid' => $paymentMethod->getId()
         ]);
     }
 
@@ -59,7 +61,8 @@ class PaymentMethodPersistenceService implements PaymentMethodPersistenceService
             $this->shopPaymentMethodRepository->save($method);
             $this->logger->info('Payment method soft-deleted', [
                 'shopId' => $shop->getId(),
-                'paymentMethodId' => $paymentMethodId
+                'paymentMethodId' => $paymentMethodId,
+                'paymentMethodUuid' => $method->getId()
             ]);
         } else {
             $this->logger->warning('Payment method to delete not found or already removed', [

@@ -3,13 +3,17 @@
 namespace App\Tests\Unit\Controller;
 
 use App\Controller\ShopPaymentsConfigurationController;
-use App\Dto\PaymentDto;
+use App\Dto\Payment\EditPaymentCommand;
+use App\Dto\Payment\DeletePaymentCommand;
+use App\Dto\Payment\CreatePaymentCommand;
 use App\Dto\ShopContextDto;
 use App\Message\CreatePaymentMessage;
 use App\Message\DeletePaymentMessage;
 use App\Message\UpdatePaymentMessage;
-use App\Service\Payment\PaymentServiceInterface;
 use App\Service\Payment\Util\CurrencyHelper;
+use App\ValueObject\PaymentData;
+use App\Factory\PaymentDataFactoryInterface;
+use App\Service\Payment\PaymentServiceInterface;
 use App\Service\Shop\ShopContextService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +31,7 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
     private MockObject $logger;
     private MockObject $shopContextService;
     private MockObject $currencyHelper;
+    private MockObject $paymentDataFactory;
 
     protected function setUp(): void
     {
@@ -35,13 +40,15 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->shopContextService = $this->createMock(ShopContextService::class);
         $this->currencyHelper = $this->createMock(CurrencyHelper::class);
+        $this->paymentDataFactory = $this->createMock(PaymentDataFactoryInterface::class);
 
         $this->controller = new ShopPaymentsConfigurationController(
             $this->logger,
             $this->paymentService,
             $this->messageBus,
             $this->shopContextService,
-            $this->currencyHelper
+            $this->currencyHelper,
+            $this->paymentDataFactory
         );
 
         $this->controller = $this->getMockBuilder(ShopPaymentsConfigurationController::class)
@@ -50,7 +57,8 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
                 $this->paymentService,
                 $this->messageBus,
                 $this->shopContextService,
-                $this->currencyHelper
+                $this->currencyHelper,
+                $this->paymentDataFactory
             ])
             ->onlyMethods(['render', 'json'])
             ->getMock();
@@ -95,18 +103,10 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
     public function testDeletePaymentAction(): void
     {
         // Arrange
-        $shopContext = new ShopContextDto('test-shop');
-        $paymentDto = new PaymentDto(
+        $shopContext = new ShopContextDto('test-shop', 'en_US');
+        $command = new DeletePaymentCommand(
             payment_id: 123
         );
-
-        $this->logger
-            ->expects($this->once())
-            ->method('info')
-            ->with('Delete payment request', [
-                'shop' => 'test-shop',
-                'payment_id' => 123,
-            ]);
 
         $this->messageBus
             ->expects($this->once())
@@ -118,9 +118,10 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
             }))
             ->willReturn(new Envelope(new \stdClass()));
 
-        // Act & Assert
-        $response = $this->controller->deletePaymentAction($shopContext, $paymentDto);
+        // Act
+        $response = $this->controller->deletePaymentAction($shopContext, $command);
 
+        // Assert
         $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals(Response::HTTP_NO_CONTENT, $response->getStatusCode());
     }
@@ -130,28 +131,38 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
         // Arrange
         $shopContext = new ShopContextDto('test-shop', 'en_US');
 
-        $paymentDto = new PaymentDto(
+        $command = new EditPaymentCommand(
             payment_id: 123,
-            name: 'updated-payment',
             visible: true,
             active: true,
-            currencies: ['USD', 'EUR'],
-            title: 'Updated Payment',
-            description: 'Updated description'
+            title: 'Test Payment',
+            description: 'Updated description',
+            locale: 'en_US',
+            currencies: ['USD', 'EUR']
         );
 
         $this->messageBus
             ->expects($this->once())
             ->method('dispatch')
             ->with($this->callback(function ($message) {
-                return $message instanceof UpdatePaymentMessage
-                    && $message->getShopCode() === 'test-shop'
-                    && $message->getPaymentId() === 123; // Zmienione na int zamiast string
+                if (!($message instanceof UpdatePaymentMessage)) {
+                    return false;
+                }
+                
+                $paymentData = $message->getPaymentData();
+                
+                return $message->getShopCode() === 'test-shop'
+                    && $message->getPaymentId() === 123
+                    && $paymentData->getTranslations()['en_US']['title'] === 'Test Payment'
+                    && $paymentData->getTranslations()['en_US']['description'] === 'Updated description'
+                    && $paymentData->getTranslations()['en_US']['active'] === true
+                    && in_array('USD', $paymentData->getCurrencies())
+                    && in_array('EUR', $paymentData->getCurrencies());
             }))
             ->willReturn(new Envelope(new \stdClass()));
 
         // Act
-        $response = $this->controller->editPaymentAction($shopContext, $paymentDto);
+        $response = $this->controller->editPaymentAction($shopContext, $command);
 
         // Assert
         $this->assertInstanceOf(Response::class, $response);
@@ -162,16 +173,15 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
     {
         // Arrange
         $shopContext = new ShopContextDto('test-shop', 'en_US');
-
-        $paymentDto = new PaymentDto(
-            name: 'new-payment',
-            visible: true,
-            active: true,
-            currencies: ['USD', 'EUR'],
+        $command = new CreatePaymentCommand(
             title: 'New Payment',
             description: 'New payment description',
-            locale: 'en_US'
+            locale: 'en_US',
+            active: true,
+            currencies: [1, 2] // Currency IDs
         );
+
+        $paymentData = $this->createMock(PaymentData::class);
 
         $this->logger
             ->expects($this->once())
@@ -183,17 +193,24 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
                 'locale' => 'en_US'
             ]);
 
+        $this->paymentDataFactory
+            ->expects($this->once())
+            ->method('createFromCreateCommand')
+            ->with($command)
+            ->willReturn($paymentData);
+
         $this->messageBus
             ->expects($this->once())
             ->method('dispatch')
-            ->with($this->callback(function ($message) {
+            ->with($this->callback(function ($message) use ($paymentData) {
                 return $message instanceof CreatePaymentMessage
-                    && $message->getShopCode() === 'test-shop';
+                    && $message->getShopCode() === 'test-shop'
+                    && $message->getPaymentData() === $paymentData;
             }))
             ->willReturn(new Envelope(new \stdClass()));
 
         // Act
-        $response = $this->controller->createPaymentAction($shopContext, $paymentDto);
+        $response = $this->controller->createPaymentAction($shopContext, $command);
 
         // Assert
         $this->assertInstanceOf(Response::class, $response);

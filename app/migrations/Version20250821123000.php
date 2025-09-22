@@ -18,7 +18,7 @@ final class Version20250821123000 extends AbstractMigration
     {
         $this->addSql('CREATE UNIQUE INDEX UNIQ_SHOP_APP_INSTALLATIONS_SHOP ON shop_app_installations (shop)');
         $this->addSql('CREATE TABLE shop_payment_methods (
-            id INT AUTO_INCREMENT NOT NULL,
+            id VARCHAR(36) NOT NULL COMMENT \'(DC2Type:uuid)\',
             shop_id INT UNSIGNED NOT NULL,
             payment_method_id INT UNSIGNED NOT NULL,
             created_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\',

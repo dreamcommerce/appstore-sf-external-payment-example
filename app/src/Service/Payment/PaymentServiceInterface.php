@@ -11,7 +11,7 @@ interface PaymentServiceInterface
     /**
      * Creates a new payment for the shop
      */
-    public function createPayment(ShopAppInstallation $shop, string $name, array $translations, array $currencies, array $supportedCurrencies = []): void;
+    public function createPayment(ShopAppInstallation $shop, string $name, array $translations, array $currencies = [], array $supportedCurrencies = []): void;
 
     /**
      * Updates an existing payment
