@@ -8,9 +8,9 @@ class DeletePaymentChannelMessage
 {
     private string $shopCode;
     private int $channelId;
-    private string $paymentId;
+    private int $paymentId;
 
-    public function __construct(string $shopCode, int $channelId, string $paymentId)
+    public function __construct(string $shopCode, int $channelId, int $paymentId)
     {
         $this->shopCode = $shopCode;
         $this->channelId = $channelId;
@@ -27,7 +27,7 @@ class DeletePaymentChannelMessage
         return $this->channelId;
     }
 
-    public function getPaymentId(): string
+    public function getPaymentId(): int
     {
         return $this->paymentId;
     }
