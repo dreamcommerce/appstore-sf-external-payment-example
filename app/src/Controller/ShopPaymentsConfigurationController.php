@@ -87,21 +87,7 @@ class ShopPaymentsConfigurationController extends AbstractController
         #[MapQueryString] ShopContextDto $shopContext,
         #[MapRequestPayload] EditPaymentCommand $command
     ): Response {
-        $paymentData = PaymentData::createForUpdate(
-            [
-                'currencies' => $command->currencies,
-                'visible' => $command->visible,
-                'active' => $command->active,
-                'translations' => [
-                    $shopContext->translations => [
-                        'title' => $command->title,
-                        'description' => $command->description,
-                        'active' => $command->active,
-                    ]
-                ]
-            ],
-            $shopContext->translations
-        );
+        $paymentData = $this->paymentDataFactory->createForUpdateFromCommand($command, $shopContext->translations);
 
         $message = new UpdatePaymentMessage(
             $shopContext->shop,

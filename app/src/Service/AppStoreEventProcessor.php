@@ -4,28 +4,31 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use App\Factory\PaymentDataFactoryInterface;
 use App\Message\CreatePaymentMessage;
 use App\Service\Event\AppStoreLifecycleAction;
 use App\Service\Event\AppStoreLifecycleEvent;
 use App\Service\OAuth\OAuthService;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Psr\Log\LoggerInterface;
-use App\ValueObject\PaymentData;
 
 class AppStoreEventProcessor
 {
     private LoggerInterface $logger;
     private OAuthService $oauthService;
     private MessageBusInterface $bus;
+    private PaymentDataFactoryInterface $paymentDataFactory;
 
     public function __construct(
         LoggerInterface $logger,
         OAuthService $oauthService,
-        MessageBusInterface $bus
+        MessageBusInterface $bus,
+        PaymentDataFactoryInterface $paymentDataFactory
     ) {
         $this->logger = $logger;
         $this->oauthService = $oauthService;
         $this->bus = $bus;
+        $this->paymentDataFactory = $paymentDataFactory;
     }
 
     public function handleEvent(AppStoreLifecycleEvent $event): void
@@ -38,9 +41,9 @@ class AppStoreEventProcessor
              */
             $this->oauthService->authenticate($event);
 
-            $paymentData = PaymentData::createForNewPayment(
+            $paymentData = $this->paymentDataFactory->createForNewPayment(
                 'External Payment '.uniqid().' from example App',
-                'External payment created during installation',
+                'External payment created during installation'
             );
             $this->bus->dispatch(new CreatePaymentMessage($event->shopId, $paymentData));
         }

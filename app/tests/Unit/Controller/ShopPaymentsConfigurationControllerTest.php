@@ -141,23 +141,32 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
             currencies: ['USD', 'EUR']
         );
 
+        $paymentData = $this->createMock(PaymentData::class);
+        $paymentData->method('getTranslations')->willReturn([
+            'en_US' => [
+                'title' => 'Test Payment',
+                'description' => 'Updated description',
+                'active' => true
+            ]
+        ]);
+        $paymentData->method('getCurrencies')->willReturn(['USD', 'EUR']);
+        $this->paymentDataFactory
+            ->expects($this->once())
+            ->method('createForUpdateFromCommand')
+            ->with($command, 'en_US')
+            ->willReturn($paymentData);
+
         $this->messageBus
             ->expects($this->once())
             ->method('dispatch')
-            ->with($this->callback(function ($message) {
+            ->with($this->callback(function ($message) use ($paymentData) {
                 if (!($message instanceof UpdatePaymentMessage)) {
                     return false;
                 }
                 
-                $paymentData = $message->getPaymentData();
-                
                 return $message->getShopCode() === 'test-shop'
                     && $message->getPaymentId() === 123
-                    && $paymentData->getTranslations()['en_US']['title'] === 'Test Payment'
-                    && $paymentData->getTranslations()['en_US']['description'] === 'Updated description'
-                    && $paymentData->getTranslations()['en_US']['active'] === true
-                    && in_array('USD', $paymentData->getCurrencies())
-                    && in_array('EUR', $paymentData->getCurrencies());
+                    && $message->getPaymentData() === $paymentData;
             }))
             ->willReturn(new Envelope(new \stdClass()));
 
