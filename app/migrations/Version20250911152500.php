@@ -18,7 +18,7 @@ final class Version20250911152500 extends AbstractMigration
     {
         $this->addSql('CREATE TABLE transactions (
             id INT AUTO_INCREMENT NOT NULL,
-            payment_method_id INT NOT NULL,
+            payment_method_id VARCHAR(36) NOT NULL,
             type VARCHAR(50) NOT NULL,
             order_id VARCHAR(255) DEFAULT NULL,
             external_payment_id VARCHAR(255) DEFAULT NULL,

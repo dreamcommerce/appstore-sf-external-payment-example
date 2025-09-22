@@ -26,7 +26,6 @@ class AppStoreEventProcessor
         OAuthService $oauthService,
         MessageBusInterface $bus,
         PaymentDataFactoryInterface $paymentDataFactory,
-        MessageBusInterface $bus,
         ShopPersistenceService $shopPersistenceService
     ) {
         $this->logger = $logger;
