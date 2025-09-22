@@ -18,46 +18,27 @@ class MessengerLoggingMiddleware implements MiddlewareInterface
         $this->logger = $logger;
     }
 
-    private function serializeMessage(object $message): array
-    {
-        $reflection = new \ReflectionObject($message);
-        $data = [];
-        foreach ($reflection->getProperties() as $property) {
-            $property->setAccessible(true);
-            $data[$property->getName()] = $property->getValue($message);
-        }
-        return $data;
-    }
-
     public function handle(Envelope $envelope, StackInterface $stack): Envelope
     {
         $message = $envelope->getMessage();
-        $messageClass = get_class($message);
-        $messageId = null;
-        if (property_exists($message, 'id')) {
-            $messageId = $message->id;
-        } elseif (method_exists($message, 'getId')) {
-            $messageId = $message->getId();
-        } else {
-            $messageId = spl_object_hash($message);
+        $this->logger->info('Processing message', [
+            'type' => get_class($message),
+            'data' => $this->getMessageData($message)
+        ]);
+
+        return $stack->next()->handle($envelope, $stack);
+    }
+
+    private function getMessageData(object $message): array
+    {
+        if (method_exists($message, 'toArray')) {
+            return $message->toArray();
         }
 
         if ($message instanceof \JsonSerializable) {
-            $serialized = json_encode($message->jsonSerialize());
-        } elseif (method_exists($message, 'toArray')) {
-            $serialized = json_encode($message->toArray());
-        } else {
-            $data = get_object_vars($message);
-            if (empty($data)) {
-                $data = $this->serializeMessage($message);
-            }
-            $serialized = json_encode($data);
+            return $message->jsonSerialize();
         }
-        $this->logger->info('Messenger message handled', [
-            'messageId' => $messageId,
-            'type' => $messageClass,
-            'data' => $serialized
-        ]);
-        return $stack->next()->handle($envelope, $stack);
+
+        return get_object_vars($message);
     }
 }

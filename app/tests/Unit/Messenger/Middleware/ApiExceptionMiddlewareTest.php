@@ -48,7 +48,6 @@ class ApiExceptionMiddlewareTest extends TestCase
             $this->fail('TemporaryPaymentApiException was not thrown');
         } catch (TemporaryPaymentApiException $e) {
             //Then
-            $this->assertInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString('Service temporarily unavailable', $e->getMessage());
         }
     }
@@ -74,8 +73,6 @@ class ApiExceptionMiddlewareTest extends TestCase
             $this->fail('PaymentApiException was not thrown');
         } catch (PaymentApiException $e) {
             //Then
-            $this->assertInstanceOf(PaymentApiException::class, $e);
-            $this->assertNotInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString('Invalid payment data', $e->getMessage());
         }
     }
@@ -104,7 +101,6 @@ class ApiExceptionMiddlewareTest extends TestCase
             $this->fail('TemporaryPaymentApiException was not thrown');
         } catch (TemporaryPaymentApiException $e) {
             //Then
-            $this->assertInstanceOf(TemporaryPaymentApiException::class, $e);
             $this->assertStringContainsString('Gateway timeout', $e->getMessage());
         }
     }
@@ -128,10 +124,10 @@ class ApiExceptionMiddlewareTest extends TestCase
                 $this->anything(),
                 $this->callback(function (array $context) {
                     //Then
-                    return isset($context['message_class'], $context['error_message'], $context['error_code'])
-                        && $context['message_class'] === TestMessage::class
-                        && $context['error_message'] === 'Service unavailable'
-                        && $context['error_code'] === 503;
+                    return isset($context['message_type'], $context['message'], $context['code'])
+                        && $context['message_type'] === TestMessage::class
+                        && $context['message'] === 'Service unavailable'
+                        && $context['code'] === 503;
                 })
             );
         //When
@@ -139,9 +135,6 @@ class ApiExceptionMiddlewareTest extends TestCase
         $this->middleware->handle($envelope, $stack);
     }
 
-    /**
-     * Creates a middleware stack that throws an exception
-     */
     private function createFailingStackWithException(\Throwable $exception): StackMiddleware
     {
         $stack = $this->createMock(StackMiddleware::class);

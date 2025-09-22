@@ -16,6 +16,22 @@ class CurrencyHelper
         $this->logger = $logger;
     }
 
+    /**
+     * Returns an array of currency details for the given currency IDs.
+     * Each currency detail is an array with the following keys:
+     * - id: The currency ID.
+     * - name: The currency name.
+     * - symbol: The currency symbol.
+     * - format: The currency format.
+     * - decimal_digits: The number of decimal digits.
+     * - decimal_separator: The decimal separator.
+     * - thousand_separator: The thousand separator.
+     *
+     * @param ShopClient $shopClient
+     * @param OAuthShop $oauthShop
+     * @param array $currencyIds
+     * @return array[] An array of currency detail arrays.
+     */
     public function getCurrenciesDetails(ShopClient $shopClient, OAuthShop $oauthShop, array $currencyIds): array
     {
         if (empty($currencyIds)) {

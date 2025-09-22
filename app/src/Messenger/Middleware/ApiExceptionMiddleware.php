@@ -31,46 +31,44 @@ class ApiExceptionMiddleware implements MiddlewareInterface
     {
         try {
             return $stack->next()->handle($envelope, $stack);
-        } catch (ApiException $e) {
-            $this->handleApiException($envelope, $e);
-        } catch (HandlerFailedException $e) {
-            $this->handleNestedExceptions($envelope, $e);
+        } catch (ApiException $exception) {
+            $this->handleApiException($envelope, $exception);
+        } catch (HandlerFailedException $exception) {
+            $this->handleHandlerFailedException($envelope, $exception);
         }
     }
 
-    private function handleApiException(Envelope $envelope, ApiException $e): never
+    private function handleApiException(Envelope $envelope, ApiException $exception): never
     {
-        $messageName = get_class($envelope->getMessage());
-        $this->logger->error('API error while handling message', [
-            'message_class' => $messageName,
-            'error_message' => $e->getMessage(),
-            'error_code' => $e->getCode(),
+        $this->logger->error('API error', [
+            'message' => $exception->getMessage(),
+            'code' => $exception->getCode(),
+            'message_type' => get_class($envelope->getMessage())
         ]);
 
-        if ($this->exceptionClassifier->isRecoverableError($e)) {
+        if ($this->exceptionClassifier->isRecoverableError($exception)) {
             throw new TemporaryPaymentApiException(
-                'Temporary API error: ' . $e->getMessage(),
-                $e->getCode(),
-                $e
-            );
-        } else {
-            throw new PaymentApiException(
-                'API error: ' . $e->getMessage(),
-                $e->getCode(),
-                $e
+                'Temporary API error: ' . $exception->getMessage(),
+                $exception->getCode(),
+                $exception
             );
         }
+
+        throw new PaymentApiException(
+            'API error: ' . $exception->getMessage(),
+            $exception->getCode(),
+            $exception
+        );
     }
 
-    private function handleNestedExceptions(Envelope $envelope, HandlerFailedException $handlerException): never
+    private function handleHandlerFailedException(Envelope $envelope, HandlerFailedException $exception): never
     {
-        $exceptions = $handlerException->getWrappedExceptions();
-        foreach ($exceptions as $exception) {
-            if ($exception instanceof ApiException) {
-                $this->handleApiException($envelope, $exception);
+        foreach ($exception->getWrappedExceptions() as $wrappedException) {
+            if ($wrappedException instanceof ApiException) {
+                $this->handleApiException($envelope, $wrappedException);
             }
         }
 
-        throw $handlerException;
+        throw $exception;
     }
 }

@@ -10,10 +10,47 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\EventListener\ExceptionListener:
+    # Exception handling configuration
+    App\Exception\Handler\ValidationExceptionHandler:
+        arguments:
+            $environment: '%kernel.environment%'
         tags:
-            - { name: kernel.event_listener, event: kernel.exception, priority: 200 }
+            - { name: 'app.exception_handler', priority: 200 }
 
+    App\Exception\Handler\ApiExceptionHandler:
+        arguments:
+            $environment: '%kernel.environment%'
+        tags:
+            - { name: 'app.exception_handler', priority: 150 }
+
+    App\Exception\Handler\HttpExceptionHandler:
+        arguments:
+            $environment: '%kernel.environment%'
+        tags:
+            - { name: 'app.exception_handler', priority: 100 }
+
+    App\Exception\Handler\GenericExceptionHandler:
+        arguments:
+            $environment: '%kernel.environment%'
+        tags:
+            - { name: 'app.exception_handler', priority: -100 }
+
+    App\Exception\Handler\ExceptionHandlerRegistry:
+        arguments:
+            $handlers: !tagged_iterator { tag: 'app.exception_handler', default_priority_method: '' }
+
+    # Messenger middlewares configuration
+    App\Messenger\Middleware\ApiExceptionMiddleware:
+        arguments:
+            $logger: '@monolog.logger'
+        tags: [{ name: 'messenger.bus_middleware', bus: 'messenger.bus.default', priority: 100 }]
+
+    App\Messenger\Middleware\MessengerLoggingMiddleware:
+        arguments:
+            $logger: '@monolog.logger'
+        tags: [{ name: 'messenger.bus_middleware', bus: 'messenger.bus.default', priority: 200 }]
+
+    # Other services configuration
     App\Security\HashValidator:
         arguments:
             $appStoreSecret: '%env(APPSTORE_APP_SECRET)%'
@@ -40,6 +77,3 @@ services:
             $appId: '%env(APP_CLIENT)%'
             $appSecret: '%env(APP_SECRET)%'
             $appstoreSecret: '%env(APPSTORE_APP_SECRET)%'
-
-    App\Messenger\Middleware\ApiExceptionMiddleware:
-        tags: [{ name: 'messenger.bus_middleware', bus: 'messenger.bus.default', priority: 100 }]

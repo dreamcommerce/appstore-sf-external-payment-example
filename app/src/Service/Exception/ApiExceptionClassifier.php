@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace App\Service\Exception;
 
 use DreamCommerce\Component\ShopAppstore\Api\Exception\ApiException;
+use Symfony\Component\HttpFoundation\Response;
 
 class ApiExceptionClassifier
 {
     private const RECOVERABLE_HTTP_CODES = [
-        500, // Internal Server Error
-        502, // Bad Gateway
-        503, // Service Unavailable
-        504, // Gateway Timeout
-        429, // Too Many Requests
+        Response::HTTP_INTERNAL_SERVER_ERROR,
+        Response::HTTP_BAD_GATEWAY,
+        Response::HTTP_SERVICE_UNAVAILABLE,
+        Response::HTTP_GATEWAY_TIMEOUT,
+        Response::HTTP_TOO_MANY_REQUESTS,
     ];
 
     public function isRecoverableError(ApiException $e): bool
