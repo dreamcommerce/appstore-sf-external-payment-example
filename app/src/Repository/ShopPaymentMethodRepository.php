@@ -38,19 +38,13 @@ class ShopPaymentMethodRepository extends ServiceEntityRepository implements Sho
 
     public function findActiveOneByShopAndPaymentMethodId(ShopAppInstallation $shop, int $paymentMethodId): ?ShopPaymentMethod
     {
-        return $this->findOneBy([
-            'shop' => $shop,
-            'paymentMethodId' => $paymentMethodId,
-            'removedAt' => null
-        ]);
-    }
-    
-    public function findOneById(string $id): ?ShopPaymentMethod
-    {
-        if (!Uuid::isValid($id)) {
-            return null;
-        }
-        
-        return $this->findOneBy(['id' => $id]);
+        return $this->createQueryBuilder('spm')
+            ->where('spm.shop = :shop')
+            ->andWhere('spm.paymentMethodId = :paymentMethodId')
+            ->andWhere('spm.removedAt IS NULL')
+            ->setParameter('shop', $shop)
+            ->setParameter('paymentMethodId', $paymentMethodId)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

@@ -79,29 +79,6 @@ class ShopPaymentMethod
         $this->removedAt = $removedAt;
     }
 
-    /**
-     * @return Collection<int, Transaction>
-     */
-    public function getTransactions(): Collection
-    {
-        return $this->transactions;
-    }
-
-    public function addTransaction(Transaction $transaction): void
-    {
-        if (!$this->transactions->contains($transaction)) {
-            $this->transactions->add($transaction);
-        }
-    }
-
-    public function removeTransaction(Transaction $transaction): void
-    {
-        $this->transactions->removeElement($transaction);
-    }
-
-    /**
-     * @return Collection<int, Transaction>
-     */
     public function getTransactions(): Collection
     {
         return $this->transactions;
