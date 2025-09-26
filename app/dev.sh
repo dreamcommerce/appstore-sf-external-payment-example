@@ -29,13 +29,4 @@ else
   exit 1
 fi
 
-# 4. Build frontend assets
-if [ -f "package.json" ]; then
-  echo "Installing JS dependencies and building frontend assets..."
-  npm install
-  npm run assets:build
-else
-  echo "package.json not found, skipping frontend assets build."
-fi
-
 echo "== Done! =="
