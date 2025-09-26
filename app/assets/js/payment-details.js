@@ -76,9 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     addTranslationButtons.forEach(function(button) {
         button.addEventListener('click', function() {
             var channelId = this.getAttribute('data-channel-id');
-            var locale = this.getAttribute('data-locale');
             if (channelId) {
-                // Przekazujemy dodatkowy parametr isNewTranslation=true
                 loadChannelData(channelId, true);
             }
         });

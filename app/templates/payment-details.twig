@@ -30,7 +30,13 @@
                             {% if payment.currencies is iterable and payment.currencies|length > 0 %}
                                 <ul class="payment-currency-list">
                                     {% for currency in payment.currencies %}
-                                        <li class="currency-badge">{{ currency.name }}</li>
+                                        <li class="currency-badge">
+                                            {% if currency is not iterable %}
+                                                {{ currency }}
+                                            {% else %}
+                                                {{ currency.name }}
+                                            {% endif %}
+                                        </li>
                                     {% endfor %}
                                 </ul>
                             {% else %}
@@ -44,7 +50,13 @@
                             {% if payment.supportedCurrencies is iterable and payment.supportedCurrencies|length > 0 %}
                                 <ul class="payment-currency-list">
                                     {% for currency in payment.supportedCurrencies %}
-                                        <li class="currency-badge">{{ currency.name }}</li>
+                                        <li class="currency-badge">
+                                            {% if currency is not iterable %}
+                                                {{ currency }}
+                                            {% else %}
+                                                {{ currency.name }}
+                                            {% endif %}
+                                        </li>
                                     {% endfor %}
                                 </ul>
                             {% else %}

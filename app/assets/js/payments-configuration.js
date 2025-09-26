@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.status === 204 || response.status === 201 || response.status === 200) {
                 document.getElementById('create-payment-modal').style.display = 'none';
                 window.location.reload();
-                alert('Payment has been created.');
+                alert('Payment has been send to create queue.');
             } else {
                 response.text().then(function(text) {
                     try {
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 document.getElementById('edit-payment-modal').style.display = 'none';
-                alert('Payment has been updated.');
+                alert('Payment has been to update queue.');
             } else {
                 response.text().then(function(text) {
                     try {
