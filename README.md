@@ -37,14 +37,10 @@ The application handles lifecycle events:
 
 ### Routes
 
-- `/app-store/view/hello-world` – main application interface loaded in the Shoper admin panel iframe
 - `/app-store/event` – endpoint for handling installation/uninstallation events (AppStore webhooks)
 - `/app-store/view/payments-configuration` – payment configuration list view for all created payments from current application
 - `/app-store/view/payment-details` – endpoint for viewing details of a specific payment in their own iframe
-
-## Extending
-
-The codebase is ready for further extension with new event types, API integrations, and payment features.
+- `/webhook/payment` – endpoint for handling payment webhooks (POST, JSON). Validates headers and SHA using build in SignatureVerifier.
 
 ## Requirements
 
