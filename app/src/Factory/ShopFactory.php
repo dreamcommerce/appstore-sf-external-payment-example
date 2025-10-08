@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Factory;
 
 use App\Domain\Shop\Model\Shop;
 use App\Entity\ShopAppInstallation;
 use App\Repository\ShopAppInstallationRepository;
+use App\Service\Helper\DateTimeHelper;
 use DreamCommerce\Component\Common\Factory\DateTimeFactory;
 use DreamCommerce\Component\ShopAppstore\Api\Http\ShopClient;
 use DreamCommerce\Component\ShopAppstore\Model\Application;
@@ -14,21 +17,13 @@ use Psr\Log\LoggerInterface;
 
 class ShopFactory implements ShopFactoryInterface
 {
-    private LoggerInterface $logger;
-    private ShopClient $shopClient;
-    private ShopAppInstallationRepository $shopAppInstallationRepository;
-    private Application $application;
-
     public function __construct(
-        LoggerInterface $logger,
-        ShopClient $shopClient,
-        ShopAppInstallationRepository $shopAppInstallationRepository,
-        Application $application
+        private readonly LoggerInterface $logger,
+        private readonly ShopClient $shopClient,
+        private readonly ShopAppInstallationRepository $shopAppInstallationRepository,
+        private readonly Application $application,
+        private readonly DateTimeHelper $dateTimeHelper
     ) {
-        $this->logger = $logger;
-        $this->shopClient = $shopClient;
-        $this->shopAppInstallationRepository = $shopAppInstallationRepository;
-        $this->application = $application;
     }
 
     public function createOAuthShop(Shop $shopData): OAuthShop
@@ -53,7 +48,7 @@ class ShopFactory implements ShopFactoryInterface
         }
 
         /** @var ShopAppInstallation $shopAppInstallation */
-        $shopAppInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
+        $shopAppInstallation = $this->shopAppInstallationRepository->findOneByShopLicense($shopId);
         if (!$shopAppInstallation) {
             $this->logger->debug('Shop not found for the given ID', ['id' => $shopId]);
             return $this->createOAuthShop($shopData);
@@ -105,14 +100,15 @@ class ShopFactory implements ShopFactoryInterface
             $token->setRefreshToken($tokens['refresh_token']);
 
             if (isset($tokens['expires_at']) && $tokens['expires_at']) {
-                $expiresAt = new \DateTime($tokens['expires_at']);
-                $token->setExpiresAt($expiresAt);
+                $expiresAt = $this->dateTimeHelper->createFromString($tokens['expires_at']);
+                $expiresAtDateTime = \DateTime::createFromImmutable($expiresAt);
+                $token->setExpiresAt($expiresAtDateTime);
 
-                if ($expiresAt < new \DateTime()) {
+                if ($expiresAtDateTime < new \DateTime()) {
                     $this->logger->info('Token has expired, authentication will be required', [
                         'shop_id' => $shopId,
                         'shop_url' => $shopUrl,
-                        'expired_at' => $expiresAt->format('Y-m-d H:i:s')
+                        'expired_at' => $expiresAtDateTime->format('Y-m-d H:i:s')
                     ]);
                 }
             }

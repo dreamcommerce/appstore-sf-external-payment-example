@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repository;
 
 use App\Entity\ShopAppInstallation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-class ShopAppInstallationRepository extends ServiceEntityRepository
+class ShopAppInstallationRepository extends ServiceEntityRepository implements ShopAppInstallationRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -20,5 +22,24 @@ class ShopAppInstallationRepository extends ServiceEntityRepository
         if ($flush) {
             $em->flush();
         }
+    }
+
+    public function remove(ShopAppInstallation $shopAppInstallation, bool $flush = true): void
+    {
+        $em = $this->getEntityManager();
+        $em->remove($shopAppInstallation);
+        if ($flush) {
+            $em->flush();
+        }
+    }
+
+    public function findOneByShopLicense(string $shopLicense): ?ShopAppInstallation
+    {
+        return $this->findOneBy(['shop' => $shopLicense]);
+    }
+
+    public function findOneByShopUrl(string $shopUrl): ?ShopAppInstallation
+    {
+        return $this->findOneBy(['shopUrl' => $shopUrl]);
     }
 }

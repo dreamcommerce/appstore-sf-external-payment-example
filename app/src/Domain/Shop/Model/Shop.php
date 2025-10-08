@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domain\Shop\Model;
 
 use App\Service\Event\AppStoreLifecycleEvent;
@@ -8,11 +10,11 @@ class Shop
 {
     private string $shopId;
     private string $shopUrl;
-    private string $version;
+    private int $version;
     private ?string $authCode;
 
     public function __construct(
-        string $shopId, string $shopUrl, string $version, ?string $authCode = null
+        string $shopId, string $shopUrl, int $version, ?string $authCode = null
     )
     {
         $this->shopId = $shopId;
@@ -26,7 +28,7 @@ class Shop
         return new self(
             $event->shopId,
             $event->shopUrl,
-            $event->version,
+            $event->version, // Bez konwersji
             $event->authCode
         );
     }
@@ -41,7 +43,7 @@ class Shop
         return $this->shopUrl;
     }
 
-    public function getVersion(): ?string
+    public function getVersion(): int // Zmiana typu zwracanej wartości
     {
         return $this->version;
     }

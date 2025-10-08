@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Persistence;
 
 use App\Domain\Shop\Model\Shop;
 use App\Entity\ShopAppInstallation;
 use App\Factory\ShopAppInstallationFactory;
 use App\Repository\ShopAppInstallationRepository;
+use App\Service\Payment\PaymentServiceInterface;
 use App\Service\Token\TokenManagerInterface;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 use Psr\Log\LoggerInterface;
@@ -16,17 +19,20 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
     private ShopAppInstallationRepository $shopAppInstallationRepository;
     private TokenManagerInterface $tokenManager;
     private ShopAppInstallationFactory $shopAppInstallationFactory;
+    private PaymentServiceInterface $paymentService;
 
     public function __construct(
         LoggerInterface $logger,
         ShopAppInstallationRepository $shopAppInstallationRepository,
         TokenManagerInterface $tokenManager,
-        ShopAppInstallationFactory $shopAppInstallationFactory
+        ShopAppInstallationFactory $shopAppInstallationFactory,
+        PaymentServiceInterface $paymentService
     ) {
         $this->logger = $logger;
         $this->shopAppInstallationRepository = $shopAppInstallationRepository;
         $this->tokenManager = $tokenManager;
         $this->shopAppInstallationFactory = $shopAppInstallationFactory;
+        $this->paymentService = $paymentService;
     }
 
     public function saveShopAppInstallation(OAuthShop $shop, string $authCode): void
@@ -62,7 +68,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
     public function updateShopToken(OAuthShop $shop): void
     {
         $shopId = (string)$shop->getId();
-        $shopAppInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
+        $shopAppInstallation = $this->shopAppInstallationRepository->findOneByShopLicense($shopId);
 
         if (!$shopAppInstallation) {
             $this->logger->warning('Cannot update token: Shop not found', [
@@ -91,7 +97,7 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
     public function updateApplicationVersion(OAuthShop $OAuthShop, Shop $shop): void
     {
         $shopId = (string)$OAuthShop->getId();
-        $shopAppInstallation = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopId]);
+        $shopAppInstallation = $this->shopAppInstallationRepository->findOneByShopLicense($shopId);
 
         if (!$shopAppInstallation) {
             $this->logger->warning('Cannot update application version: Shop not found', [
@@ -103,5 +109,26 @@ class ShopPersistenceService implements ShopPersistenceServiceInterface
         /** @var ShopAppInstallation $shopAppInstallation  */
         $shopAppInstallation->setApplicationVersion($shop->getVersion() ?? $OAuthShop->getVersion() ?? 1);
         $this->shopAppInstallationRepository->save($shopAppInstallation);
+    }
+
+    public function uninstallShop(string $shopId, string $shopUrl): void
+    {
+        $shopInstallation = $this->shopAppInstallationRepository->findOneByShopLicense($shopId);
+        
+        if (!$shopInstallation) {
+            $this->logger->warning('Shop installation not found during uninstall', [
+                'shop_id' => $shopId,
+                'shop_url' => $shopUrl
+            ]);
+            return;
+        }
+
+        $this->paymentService->removeAllForShop($shopId);
+        $this->shopAppInstallationRepository->remove($shopInstallation);
+
+        $this->logger->info('Application uninstalled successfully', [
+            'shop_id' => $shopId,
+            'shop_url' => $shopUrl
+        ]);
     }
 }

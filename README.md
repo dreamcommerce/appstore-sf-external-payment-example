@@ -37,12 +37,10 @@ The application handles lifecycle events:
 
 ### Routes
 
-- `/app-store/view/hello-world` – main application interface loaded in the Shoper admin panel iframe
 - `/app-store/event` – endpoint for handling installation/uninstallation events (AppStore webhooks)
-
-## Extending
-
-The codebase is ready for further extension with new event types, API integrations, and payment features.
+- `/app-store/view/payments-configuration` – payment configuration list view for all created payments from current application
+- `/app-store/view/payment-details` – endpoint for viewing details of a specific payment in their own iframe
+- `/webhook/payment` – endpoint for handling payment webhooks (POST, JSON). Validates headers and SHA using build in SignatureVerifier.
 
 ## Requirements
 
@@ -140,3 +138,44 @@ ngrok http 8080
 
 After running ngrok, you will get a public HTTPS URL (e.g. `https://abc123.ngrok.io`).  
 Use this URL in Shoper AppTools as your app's endpoint.
+
+## Building frontend assets
+
+This project uses a simple asset pipeline based on Node.js and Less for building CSS and copying JS files.
+
+### Requirements
+- Node.js (>=14)
+- npm (>=6) or yarn
+
+### Installation
+
+Install JS dependencies:
+
+```bash
+npm install
+```
+
+Build assets (CSS and JS):
+
+```bash
+npm run assets:build
+```
+
+This will:
+- Compile `assets/styles/payments-configuration.less` to `public/assets/payments-configuration.css`
+- Copy all JS files from `assets/js/` to `public/assets/`
+
+You should run this command after any change in frontend assets.
+
+### JS Snippet Integration in Shoper
+To enable payment handling, you must manually copy the JS snippet to your Shoper application snippet (for RWD skin).
+
+1. Locate the file:
+   `assets/js/snippets/payment-data-handler.js`
+2. Copy the entire content of this file.
+3. Change the URL 'API_URL' in the script.
+4. In the Shoper admin panel, go to the AppTools and application snippet section (for RWD skin).
+5. Paste the JS code directly into the snippet field.
+6. Ensure the snippet is loaded on the cart or payment page.
+
+> **Note:** This JS file is not published automatically by Symfony and should not be treated as a standard frontend asset. It is intended for manual integration via the Shoper application panel.

@@ -37,7 +37,7 @@ class ShopAppInstallation
     public function __construct(string $shop, string $shopUrl, int $applicationVersion, string $authCode)
     {
         $this->shop = $shop;
-        $this->shopUrl = $shopUrl;
+        $this->shopUrl = $this->normalizeShopUrl($shopUrl);
         $this->applicationVersion = $applicationVersion;
         $this->authCode = $authCode;
         $this->tokens = new ArrayCollection();
@@ -109,5 +109,10 @@ class ShopAppInstallation
         foreach ($this->tokens as $token) {
             $token->deactivate(); // TODO implement deactivate method in ShopAppToken
         }
+    }
+
+    private function normalizeShopUrl(string $url): string
+    {
+        return preg_replace('#^https?://#', '', $url);
     }
 }

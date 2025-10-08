@@ -1,0 +1,167 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Application Payments Settings{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/payments-configuration.css') }}">
+{% endblock %}
+{% block body %}
+    <div id="payment-setting">
+        <div class="payment-list-header">
+            <h2 class="payment-list-title">Configurable Payments from Application</h2>
+            <button id="create-payment-btn" class="btn btn-success create-btn">
+                <span class="icon-plus" aria-hidden="true">+</span> Create New Payment
+            </button>
+        </div>
+        <div class="payment-list-frame modern payment-list-bordered">
+            <div class="payment-list">
+                {% for payment in paymentSettings %}
+                    <div class="payment-item modern" data-id="{{ payment.payment_id }}" data-name="{{ payment.name }}" data-visible="{{ payment.visible }}" data-active="{{ payment.active|default('inactive') }}" data-currencies="{{ payment.currencies|json_encode }}" data-description="{{ payment.description }}" data-title="{{ payment.title }}">
+                        <div class="payment-info">
+                            <span class="payment-name">{{ payment.name }} {% if payment.description %}({{ payment.description }}){% endif %}</span>
+                            <span class="payment-visible">
+                                {% if payment.visible == true or payment.visible == 1 %}
+                                    <span class="status-icon status-yes" title="Visible">&#x2714;</span> Visible
+                                {% else %}
+                                    <span class="status-icon status-no" title="Hidden">&#x2716;</span> Hidden
+                                {% endif %}
+                            </span>
+                            <span class="payment-active">
+                                {% if payment.active == true or payment.active == 1 %}
+                                    <span class="status-icon status-yes" title="Active">&#x2714;</span> Active
+                                {% else %}
+                                    <span class="status-icon status-no" title="Inactive">&#x2716;</span> Inactive
+                                {% endif %}
+                            </span>
+                            {% if payment.supportedCurrencies is defined and payment.supportedCurrencies|length > 0 %}
+                                <span class="payment-currencies">
+                                    <strong>Waluty:</strong> {{ payment.supportedCurrencies|join(', ') }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="payment-actions">
+                            <div class="actions actions-column action-panel">
+                                <button type="button" class="btn btn-primary action-edit edit-btn">Edit</button>
+                                <button type="button" class="btn btn-danger action-delete delete-btn">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="payment-empty modern">No payments available.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for editing payment -->
+    <div id="edit-payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Payment</h2>
+            <form id="edit-payment-form">
+                <input type="hidden" id="edit-payment-id" name="payment_id">
+
+                <div class="form-group">
+                    <label for="edit-payment-name">Payment Name</label>
+                    <input type="text" id="edit-payment-name" name="name" required readonly class="readonly-field">
+                    <small class="form-hint">The payment identifier cannot be changed</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-payment-active">Activity</label>
+                    <select id="edit-payment-active" name="active">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-payment-visible">Visibility</label>
+                    <select id="edit-payment-visible" name="visible">
+                        <option value="1">Visible</option>
+                        <option value="0">Hidden</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-payment-currencies">Obsługiwane waluty</label>
+                    <select id="edit-payment-currencies" name="currencies[]" multiple class="form-control">
+                        {% for currencyId, currency in availableCurrencies %}
+                            <option value="{{ currencyId }}">{{ currency.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-hint">Wybierz jedną lub więcej walut, które będą obsługiwane przez tę płatność</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-payment-title">Payment Title</label>
+                    <input type="text" id="edit-payment-title" name="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-payment-description">Payment Description</label>
+                    <textarea id="edit-payment-description" name="description" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary save-btn">Save Changes</button>
+                    <button type="button" class="btn btn-outline-primary cancel-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for creating new payment -->
+    <div id="create-payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-create">&times;</span>
+            <h2>Create New Payment</h2>
+            <form id="create-payment-form">
+                <div class="form-group">
+                    <label for="create-payment-name">Payment Identifier</label>
+                    <input type="text" id="create-payment-name" name="name" value="external" readonly class="readonly-field">
+                    <small class="form-hint">The identifier is fixed and required by the API</small>
+                </div>
+                <div class="form-group">
+                    <label for="create-payment-title">Payment Title</label>
+                    <input type="text" id="create-payment-title" name="title" required placeholder="e.g., External Payment">
+                </div>
+                <div class="form-group">
+                    <label for="create-payment-description">Payment Description</label>
+                    <textarea id="create-payment-description" name="description" rows="3" placeholder="Description visible to customers"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="create-payment-active">Activity</label>
+                    <select id="create-payment-active" name="active">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="create-payment-visible">Visibility</label>
+                    <select id="create-payment-visible" name="visible">
+                        <option value="1">Visible</option>
+                        <option value="0">Hidden</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="create-payment-currencies">Obsługiwane waluty</label>
+                    <select id="create-payment-currencies" name="currencies[]" multiple class="form-control">
+                        {% for currencyId, currency in availableCurrencies %}
+                            <option value="{{ currencyId }}">{{ currency.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-hint">Wybierz jedną lub więcej walut, które będą obsługiwane przez tę płatność</small>
+                </div>
+                <input type="hidden" id="create-payment-locale" name="locale" value="pl_PL">
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary save-btn">Create Payment</button>
+                    <button type="button" class="btn btn-outline-primary cancel-create-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% block javascripts %}
+    <script src="{{ asset('assets/payments-configuration.js') }}"></script>
+{% endblock %}

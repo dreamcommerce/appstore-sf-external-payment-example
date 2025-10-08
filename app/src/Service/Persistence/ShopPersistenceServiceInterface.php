@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\Persistence;
 
 use App\Domain\Shop\Model\Shop;
@@ -25,4 +27,12 @@ interface ShopPersistenceServiceInterface
      * @throws \RuntimeException on error
      */
     public function updateApplicationVersion(OAuthShop $OAuthShop, Shop $shop): void;
+
+    /**
+     * Removes shop installation data from repository
+     *
+     * @param string $shopId Shop identifier
+     * @param string $shopUrl Shop URL for logging purposes
+     */
+    public function uninstallShop(string $shopId, string $shopUrl): void;
 }

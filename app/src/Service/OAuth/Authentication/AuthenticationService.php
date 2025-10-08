@@ -1,32 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service\OAuth\Authentication;
 
 use App\Service\Event\AppStoreLifecycleEvent;
 use App\OAuth\Factory\AuthenticatorFactoryInterface;
 use App\Factory\ShopFactoryInterface;
-use App\Service\Persistence\ShopPersistenceServiceInterface;
 use App\Domain\Shop\Model\Shop;
+use App\Event\ShopAuthenticatedEvent;
 use DreamCommerce\Component\ShopAppstore\Model\OAuthShop;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 class AuthenticationService implements AuthenticationServiceInterface
 {
     private LoggerInterface $logger;
     private AuthenticatorFactoryInterface $authenticatorFactory;
     private ShopFactoryInterface $shopFactory;
-    private ShopPersistenceServiceInterface $shopPersistenceService;
+    private EventDispatcherInterface $eventDispatcher;
 
     public function __construct(
         LoggerInterface $logger,
         AuthenticatorFactoryInterface $authenticatorFactory,
         ShopFactoryInterface $shopFactory,
-        ShopPersistenceServiceInterface $shopPersistenceService,
+        EventDispatcherInterface $eventDispatcher,
     ) {
         $this->logger = $logger;
         $this->authenticatorFactory = $authenticatorFactory;
         $this->shopFactory = $shopFactory;
-        $this->shopPersistenceService = $shopPersistenceService;
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -43,21 +46,13 @@ class AuthenticationService implements AuthenticationServiceInterface
             'auth_code' => $shop->getAuthCode()
         ]);
 
-        try {
-            $authenticator = $this->authenticatorFactory->createAuthenticator();
-            $authenticator->authenticate($shop);
-            
-            $this->logger->info('OAuth authentication successful', [
-                'shop' => $shop->getId()
-            ]);
-        } catch (\Exception $e) {
-            $this->logger->error('OAuth authentication failed', [
-                'shop' => $shop->getId(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            throw $e;
-        }
+        $authenticator = $this->authenticatorFactory->createAuthenticator();
+        $authenticator->authenticate($shop);
+        
+        $this->logger->info('OAuth authentication successful', [
+            'shop' => $shop->getId(),
+            'scopes' => $shop->getToken()->getScopes(),
+        ]);
     }
 
     /**
@@ -74,14 +69,15 @@ class AuthenticationService implements AuthenticationServiceInterface
         if ($shop->isAuthenticated()) {
             $this->logger->info('Already authenticated successful', [
                 'shop_id' => $shop->getId(),
+                'scopes' => $shop->getToken()->getScopes(),
             ]);
             return;
         }
 
         $this->authenticate($shop);
-        $this->shopPersistenceService->saveShopAppInstallation(
-            $shop,
-            $event->authCode,
+        $this->eventDispatcher->dispatch(
+            new ShopAuthenticatedEvent($shop, $event->authCode),
+            ShopAuthenticatedEvent::NAME
         );
     }
 }

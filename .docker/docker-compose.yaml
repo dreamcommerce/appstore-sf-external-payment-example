@@ -1,24 +1,28 @@
+x-app-base: &app-base
+  build:
+    context: ..
+    dockerfile: ./.docker/Dockerfile
+    args:
+      PHP_VERSION: 8.2-fpm-alpine3.16
+  volumes:
+    - ../app:/var/www/html
+  environment:
+    APP_ENV: dev
+    APP_DEBUG: 1
+    TRUSTED_PROXIES: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+    TRUSTED_HOSTS: "^${SERVER_NAME:-.+}$" #or specify the domain
+    DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@database:3306/${MYSQL_DATABASE}
+
 services:
   appstore-symfony-external-payment-example-php:
+    <<: *app-base
     container_name: appstore-symfony-external-payment-example
-    build:
-      context: ..
-      dockerfile: ./.docker/Dockerfile
-      args:
-        PHP_VERSION: 8.2-fpm-alpine3.16
     ports:
       - '8080:8080'
-    volumes:
-      - ../app:/var/www/html
-    environment:
-      APP_ENV: dev # or prod
-      APP_DEBUG: 1 # or 0
-      DATABASE_URL: ${DATABASE_URL}
-      TRUSTED_PROXIES: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" #important for reverse proxies if used.
-      TRUSTED_HOSTS: "^${SERVER_NAME:-.+}$"  #or specify the domain
     depends_on:
-      - database
-    entrypoint: ["/bin/sh", "-c", "composer install --no-interaction && php bin/console cache:clear && php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate --no-interaction && php -S 0.0.0.0:8080 -t public"]
+      database:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c", "php bin/console doctrine:database:create --if-not-exists && php bin/console doctrine:migrations:migrate --no-interaction && php -S 0.0.0.0:8080 -t public"]
 
   database:
     image: mysql:8.0.33
@@ -31,29 +35,24 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - '3306:3306'
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 2s
+      timeout: 10s
+      retries: 3
     volumes:
       - database_data:/var/lib/mysql
 
   messenger-worker:
-    build:
-      context: ..
-      dockerfile: ./.docker/Dockerfile
-      args:
-        PHP_VERSION: 8.2-fpm-alpine3.16
+    <<: *app-base
     container_name: appstore-symfony-external-payment-example-messenger-worker
     entrypoint: ["/bin/sh", "-c", "./wait-for-it.sh database:3306 --timeout=30 --strict -- php bin/console messenger:consume async"]
     depends_on:
-      - appstore-symfony-external-payment-example-php
-      - database
+      database:
+        condition: service_healthy
+      appstore-symfony-external-payment-example-php:
+        condition: service_started
     restart: always
-    environment:
-      APP_ENV: dev
-      APP_DEBUG: 1
-      DATABASE_URL: ${DATABASE_URL}
-      TRUSTED_PROXIES: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
-      TRUSTED_HOSTS: "^${SERVER_NAME:-.+}$"
-    volumes:
-      - ../app:/var/www/html
 
 volumes:
   database_data:

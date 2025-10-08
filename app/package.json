@@ -1,0 +1,5 @@
+{
+    "scripts": {
+        "assets:build": "lessc assets/styles/payments-configuration.less public/assets/payments-configuration.css && lessc assets/styles/payment-details.less public/assets/payment-details.css && cp assets/js/payments-configuration.js public/assets/payments-configuration.js && cp assets/js/payment-details.js public/assets/payment-details.js && cp assets/js/shopapp-init.js public/assets/shopapp-init.js"
+    }
+}
