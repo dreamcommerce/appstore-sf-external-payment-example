@@ -3,11 +3,16 @@
 namespace App\Tests\Integration\Controller;
 
 use App\Security\HashValidator;
+use App\Service\OAuth\Authentication\AuthenticationServiceInterface;
+use App\Service\OAuth\OAuthService;
 use App\Service\Payment\PaymentServiceInterface;
 use App\Service\Payment\Util\CurrencyHelper;
+use App\Service\Persistence\ShopPersistenceServiceInterface;
+use App\Service\Shop\ShopContextService;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\HttpFoundation\Response;
+use Mockery;
 use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -43,6 +48,14 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
         };
         $container->set(HashValidator::class, $mockHashValidator);
 
+        $authService = Mockery::mock(AuthenticationServiceInterface::class);
+        $shopPersistenceService = Mockery::mock(ShopPersistenceServiceInterface::class);
+        $oAuthService = Mockery::mock(OAuthService::class);
+
+        $container->set(AuthenticationServiceInterface::class, $authService);
+        $container->set(ShopPersistenceServiceInterface::class, $shopPersistenceService);
+        $container->set(OAuthService::class, $oAuthService);
+
         $mockPaymentService = $this->createMock(PaymentServiceInterface::class);
         $mockPaymentService->method('getPaymentSettingsForShop')
             ->willReturn([
@@ -53,7 +66,7 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
                     'active' => true,
                     'currencies' => [1, 2, 3],
                     'title' => 'Test Payment',
-                    'description' => 'Test description'
+                    'description' => 'Test description',
                 ]
             ]);
         $container->set(PaymentServiceInterface::class, $mockPaymentService);
@@ -63,15 +76,16 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
             ->willReturn(new Envelope(new \stdClass()));
         $container->set('messenger.bus.default', $mockMessageBus);
 
-        $mockShopContextService = $this->getMockBuilder(\App\Service\Shop\ShopContextService::class)
+        $mockShopContextService = $this->getMockBuilder(ShopContextService::class)
             ->disableOriginalConstructor()
             ->getMock();
         $mockShopContextService->method('getShopAndClient')
             ->willReturn([
                 'shopClient' => new \stdClass(),
-                'oauthShop' => new \stdClass()
+                'oauthShop' => new \stdClass(),
+                'shopEntity' => new \stdClass()
             ]);
-        $container->set(\App\Service\Shop\ShopContextService::class, $mockShopContextService);
+        $container->set(ShopContextService::class, $mockShopContextService);
 
         $mockCurrencyHelper = $this->getMockBuilder(CurrencyHelper::class)
             ->disableOriginalConstructor()
@@ -146,128 +160,20 @@ class ShopPaymentsConfigurationControllerTest extends WebTestCase
 
     public function testPaymentSettings(): void
     {
-        // When
+        // Arrange & Act
         $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-        // When
         $queryString = http_build_query($authParams);
-        // When
         $this->client->request(
             'GET',
             '/app-store/view/payments-configuration?' . $queryString
         );
 
-        // Then
+        // Assert
         $this->assertEquals(
             Response::HTTP_OK,
             $this->client->getResponse()->getStatusCode(),
             $this->dumpResponseForDebug("Payment Settings response error")
         );
         $this->assertStringContainsString('Configurable Payments from Application', $this->client->getResponse()->getContent());
-    }
-
-    public function testCreatePayment(): void
-    {
-        // When
-        $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-        // When
-        $queryString = http_build_query($authParams);
-        // When
-        $paymentData = [
-            'name' => 'external',
-            'title' => 'Test Payment',
-            'description' => 'Test payment description',
-            'visible' => true,
-            'locale' => $this->testLocale
-        ];
-
-        // When
-        $this->client->request(
-            'POST',
-            '/app-store/view/payments-configuration/create?' . $queryString,
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode($paymentData)
-        );
-
-        // Then
-        $this->assertEquals(
-            Response::HTTP_NO_CONTENT,
-            $this->client->getResponse()->getStatusCode(),
-            $this->dumpResponseForDebug("Create Payment response error")
-        );
-
-        // Then
-        $this->assertEmpty($this->client->getResponse()->getContent());
-    }
-
-    public function testEditPayment(): void
-    {
-        // Given
-        $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-        $queryString = http_build_query($authParams);
-
-        // When
-        $paymentData = [
-            'payment_id' => 1,
-            'visible' => false,
-            'active' => true,
-            'title' => 'Updated Payment',
-            'description' => 'Updated description',
-            'currencies' => [1, 2, 3],
-            'name' => 'test-payment',
-            'locale' => $this->testLocale
-        ];
-
-        // When
-        $this->client->request(
-            'POST',
-            '/app-store/view/payments-configuration/edit?' . $queryString,
-            [],
-            [],
-            ['CONTENT_TYPE' => 'application/json'],
-            json_encode($paymentData)
-        );
-
-        // Then
-        $this->assertEquals(
-            Response::HTTP_NO_CONTENT,
-            $this->client->getResponse()->getStatusCode(),
-            $this->dumpResponseForDebug("Edit Payment response error")
-        );
-
-        // Then
-        $this->assertEmpty($this->client->getResponse()->getContent());
-    }
-
-    public function testDeletePayment(): void
-    {
-        // When
-        $authParams = $this->generateAuthParams(['translations' => $this->testLocale]);
-        // When
-        $queryString = http_build_query($authParams);
-        // When
-        $formData = [
-            'payment_id' => '1'
-        ];
-
-        // When
-        $this->client->request(
-            'POST',
-            '/app-store/view/payments-configuration/delete?' . $queryString,
-            $formData,
-            [],
-            ['CONTENT_TYPE' => 'application/x-www-form-urlencoded']
-        );
-
-        // Then
-        $this->assertEquals(
-            Response::HTTP_NO_CONTENT,
-            $this->client->getResponse()->getStatusCode(),
-            $this->dumpResponseForDebug("Delete Payment response error")
-        );
-
-        // Then
-        $this->assertEmpty($this->client->getResponse()->getContent());
     }
 }

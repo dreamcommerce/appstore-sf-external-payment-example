@@ -76,7 +76,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
     {
         // Arrange
         $shopContext = new ShopContextDto('test-shop', 'en_US');
-
         $expectedPayments = [
             [
                 'payment_id' => 1,
@@ -86,7 +85,6 @@ class ShopPaymentsConfigurationControllerTest extends TestCase
                 'currencies' => ['USD', 'EUR']
             ]
         ];
-
         $this->paymentService
             ->expects($this->once())
             ->method('getPaymentSettingsForShop')

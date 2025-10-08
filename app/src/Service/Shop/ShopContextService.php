@@ -30,7 +30,7 @@ class ShopContextService
      */
     public function getShopAndClient(string $shopCode): ?array
     {
-        $shopAppInstalled = $this->shopAppInstallationRepository->findOneBy(['shop' => $shopCode]);
+        $shopAppInstalled = $this->shopAppInstallationRepository->findOneByShopLicense($shopCode);
         if (!$shopAppInstalled) {
             $this->logger->error('Shop not found', ['shop_code' => $shopCode]);
             return null;

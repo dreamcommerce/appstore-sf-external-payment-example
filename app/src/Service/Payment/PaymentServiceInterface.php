@@ -17,4 +17,9 @@ interface PaymentServiceInterface
     public function getPaymentSettingsForShop(string $shopCode, string $locale): array;
 
     public function getPaymentById(string $shopCode, int $paymentId, string $locale): ?array;
+
+    /**
+     * Removes all payment methods for a shop
+     */
+    public function removeAllForShop(string $shopCode): void;
 }

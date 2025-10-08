@@ -2,7 +2,20 @@ security:
     providers:
         appstore_user_provider:
             id: App\Security\AppStoreUserProvider
+
     firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        payment_api:
+            pattern: ^/api/shop/payment-methods/verify
+            security: false
+
+        webhook:
+            pattern: ^/webhook
+            security: false
+
         main:
             lazy: true
             provider: appstore_user_provider
@@ -10,3 +23,5 @@ security:
                 - App\Security\IframeAuthentication
 
     access_control:
+        - { path: ^/api/shop/payment-methods/verify, roles: PUBLIC_ACCESS }
+        - { path: ^/webhook, roles: PUBLIC_ACCESS }

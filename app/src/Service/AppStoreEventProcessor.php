@@ -9,6 +9,7 @@ use App\Message\CreatePaymentMessage;
 use App\Service\Event\AppStoreLifecycleAction;
 use App\Service\Event\AppStoreLifecycleEvent;
 use App\Service\OAuth\OAuthService;
+use App\Service\Persistence\ShopPersistenceService;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Psr\Log\LoggerInterface;
 
@@ -18,17 +19,20 @@ class AppStoreEventProcessor
     private OAuthService $oauthService;
     private MessageBusInterface $bus;
     private PaymentDataFactoryInterface $paymentDataFactory;
+    private ShopPersistenceService $shopPersistenceService;
 
     public function __construct(
         LoggerInterface $logger,
         OAuthService $oauthService,
         MessageBusInterface $bus,
-        PaymentDataFactoryInterface $paymentDataFactory
+        PaymentDataFactoryInterface $paymentDataFactory,
+        ShopPersistenceService $shopPersistenceService
     ) {
         $this->logger = $logger;
         $this->oauthService = $oauthService;
         $this->bus = $bus;
         $this->paymentDataFactory = $paymentDataFactory;
+        $this->shopPersistenceService = $shopPersistenceService;
     }
 
     public function handleEvent(AppStoreLifecycleEvent $event): void
@@ -49,28 +53,19 @@ class AppStoreEventProcessor
         }
 
         if ($event->action === AppStoreLifecycleAction::UPGRADE) {
-            try {
-                $this->oauthService->authenticate($event);
-                $this->oauthService->updateApplicationVersion($event);
-                $this->logger->info('Application version update during upgrade', [
-                    'shop_id' => $event->shopId,
-                    'shop_url' => $event->shopUrl,
-                    'version' => $event->version,
-                    'success' => true
-                ]);
-            } catch (\Throwable $e) {
-                $this->logger->error('Upgrade failed', [
-                    'shop_id' => $event->shopId,
-                    'shop_url' => $event->shopUrl,
-                    'version' => $event->version,
-                    'error_message' => $e->getMessage()
-                ]);
-            }
+            $this->oauthService->authenticate($event);
+            $this->oauthService->updateApplicationVersion($event);
+            $this->logger->info('Application version update during upgrade', [
+                'shop_id' => $event->shopId,
+                'shop_url' => $event->shopUrl,
+                'version' => $event->version,
+                'success' => true
+            ]);
         }
 
         if ($event->action === AppStoreLifecycleAction::UNINSTALL) {
-            // Remove the application data from the database.
             $this->logger->info('Uninstalling the application');
+            $this->shopPersistenceService->uninstallShop($event->shopId, $event->shopUrl);
         }
     }
 }
